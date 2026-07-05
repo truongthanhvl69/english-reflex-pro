@@ -45,7 +45,7 @@ export function ReflexApp() {
           >
             {view === "home" && <Dashboard onStart={(mode) => openPractice(mode)} onMenu={() => setMobileNavOpen(true)} onNavigate={setView} />}
             {view === "courses" && <CourseLibrary onStart={(lessonId) => openPractice("typing", lessonId)} onMenu={() => setMobileNavOpen(true)} />}
-            {view === "practice" && <PracticeStudio initialMode={practiceMode} lessonId={selectedLessonId} onBack={() => setView("courses")} onMenu={() => setMobileNavOpen(true)} />}
+            {view === "practice" && <PracticeStudio initialMode={practiceMode} lessonId={selectedLessonId} onBack={() => setView("courses")} onMenu={() => setMobileNavOpen(true)} onLessonComplete={(nextId) => setSelectedLessonId(nextId)} />}
             {view === "progress" && <ProgressView onMenu={() => setMobileNavOpen(true)} />}
             {view === "leaderboard" && <LeaderboardView onMenu={() => setMobileNavOpen(true)} />}
             {view === "settings" && <AudioSettings onMenu={() => setMobileNavOpen(true)} />}

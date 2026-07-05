@@ -4,10 +4,14 @@ import { useState } from "react";
 import { Check, ChevronDown, Clock3, LockKeyhole, Play, Search, SlidersHorizontal, Sparkles, Star } from "lucide-react";
 import { courses, lessons, dailyLessons } from "@/data/courses";
 import { MobileHeader } from "@/components/sidebar";
+import { useAuth } from "@/hooks/useAuth";
 
 export function CourseLibrary({ onStart, onMenu }: { onStart: (lessonId: string) => void; onMenu: () => void }) {
   const [selectedCourse, setSelectedCourse] = useState("a1");
+  const { profile } = useAuth();
   const selected = courses.find((course) => course.id === selectedCourse) || courses[0];
+  
+  const isPro = profile?.subscription_tier === "pro" || profile?.subscription_tier === "premium";
 
   return (
     <>
@@ -35,13 +39,16 @@ export function CourseLibrary({ onStart, onMenu }: { onStart: (lessonId: string)
             <div className="lesson-panel-heading"><div><h3>Danh sách bài học</h3><p>{selected.lessons} bài · {selected.sentences} câu</p></div><button><ChevronDown size={18} /></button></div>
             <div className="lesson-list">
               {selected.id === "a1" ? (
-                lessons.map((lesson, index) => (
-                  <button key={lesson.id} disabled={lesson.locked} onClick={() => onStart(lesson.id)} className={lesson.progress > 0 && !lesson.completed ? "current" : ""}>
-                    <span className={`lesson-status ${lesson.completed ? "done" : lesson.locked ? "locked" : "ready"}`}>{lesson.completed ? <Check size={16} /> : lesson.locked ? <LockKeyhole size={14} /> : <Play size={14} fill="currentColor" />}</span>
-                    <div><strong>{lesson.title}: {lesson.subtitle}</strong><span>{lesson.progress > 0 ? `${lesson.progress}% hoàn thành` : `${10 + index * 2} câu · +${lesson.exp} EXP`}</span></div>
-                    {lesson.progress > 0 && <div className="lesson-mini-progress"><i style={{ width: `${lesson.progress}%` }} /></div>}
-                  </button>
-                ))
+                lessons.map((lesson, index) => {
+                  const lessonLocked = isPro ? false : lesson.locked;
+                  return (
+                    <button key={lesson.id} disabled={lessonLocked} onClick={() => onStart(lesson.id)} className={lesson.progress > 0 && !lesson.completed ? "current" : ""}>
+                      <span className={`lesson-status ${lesson.completed ? "done" : lessonLocked ? "locked" : "ready"}`}>{lesson.completed ? <Check size={16} /> : lessonLocked ? <LockKeyhole size={14} /> : <Play size={14} fill="currentColor" />}</span>
+                      <div><strong>{lesson.title}: {lesson.subtitle}</strong><span>{lesson.progress > 0 ? `${lesson.progress}% hoàn thành` : `${10 + index * 2} câu · +${lesson.exp} EXP`}</span></div>
+                      {lesson.progress > 0 && <div className="lesson-mini-progress"><i style={{ width: `${lesson.progress}%` }} /></div>}
+                    </button>
+                  );
+                })
               ) : selected.id === "daily" ? (
                 dailyLessons.map((lesson, index) => (
                   <button key={lesson.id} disabled={lesson.locked} onClick={() => onStart(lesson.id)} className={lesson.progress > 0 && !lesson.completed ? "current" : ""}>

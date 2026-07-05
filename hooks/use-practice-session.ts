@@ -63,6 +63,11 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
   }, []);
 
   useEffect(() => {
+    setIndex(0);
+    resetQuestion();
+  }, [lessonId, resetQuestion]);
+
+  useEffect(() => {
     setExp(profile?.exp ?? 0);
   }, [profile?.exp]);
 

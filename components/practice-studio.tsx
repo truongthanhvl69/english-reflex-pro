@@ -11,6 +11,7 @@ import {
 import { usePracticeSession } from "@/hooks/use-practice-session";
 import { playSentence, type VoiceType } from "@/services/ttsService";
 import { getAudioSettings, saveAudioSettings, stopAllAudio } from "@/services/audioManager";
+import { useAuth } from "@/hooks/useAuth";
 import type { PracticeMode } from "@/types";
 
 const modeOptions: { id: PracticeMode; label: string; icon: typeof Keyboard }[] = [
@@ -21,8 +22,41 @@ const modeOptions: { id: PracticeMode; label: string; icon: typeof Keyboard }[] 
   { id: "speaking", label: "Phát âm", icon: Mic2 },
 ];
 
-export function PracticeStudio({ initialMode, lessonId, onBack, onMenu }: { initialMode: PracticeMode; lessonId?: string | null; onBack: () => void; onMenu: () => void }) {
+function getNextLessonId(currentId?: string | null): string | null {
+  if (!currentId) return null;
+  const parts = currentId.split("-");
+  if (parts.length !== 2) return null;
+  const courseCode = parts[0];
+  const num = Number(parts[1]);
+  if (isNaN(num)) return null;
+
+  let maxLessons = 10;
+  if (courseCode === "daily") maxLessons = 12;
+  else if (courseCode === "office") maxLessons = 14;
+  else if (courseCode === "phrases") maxLessons = 50;
+  else if (courseCode === "collocations") maxLessons = 18;
+
+  if (num < maxLessons) {
+    return `${courseCode}-${num + 1}`;
+  }
+  return null;
+}
+
+export function PracticeStudio({
+  initialMode,
+  lessonId,
+  onBack,
+  onMenu,
+  onLessonComplete,
+}: {
+  initialMode: PracticeMode;
+  lessonId?: string | null;
+  onBack: () => void;
+  onMenu: () => void;
+  onLessonComplete?: (nextLessonId: string) => void;
+}) {
   const session = usePracticeSession(initialMode, lessonId);
+  const { showToast } = useAuth();
   const [toolsOpen, setToolsOpen] = useState(false);
   const [showIpa, setShowIpa] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
@@ -140,7 +174,33 @@ export function PracticeStudio({ initialMode, lessonId, onBack, onMenu }: { init
         <AnimatePresence>{toolsOpen && <motion.div className="tools-panel" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}><button onClick={() => session.setFeedback({ correct: false, title: "Đáp án tham khảo", message: "Một cách diễn đạt tự nhiên:", correctAnswer: session.sentence.english })}><BookOpen size={17} /> Xem đáp án</button><button onClick={() => setShowIpa((value) => !value)}><Gauge size={17} /> Xem IPA</button><button onClick={() => play(0.75)}><Volume2 size={17} /> Nghe chậm</button><button><Bot size={17} /> Giải thích AI</button><button><Send size={17} /> Báo lỗi</button><div className="tool-nav"><button onClick={session.previous}><ChevronLeft size={17} /> Câu trước</button><button onClick={session.next}>Câu sau <ChevronRight size={17} /></button></div></motion.div>}</AnimatePresence>
       </div>
 
-      <AnimatePresence>{session.feedback && <FeedbackSheet feedback={session.feedback} markedHard={session.markedHard} onToggleHard={session.toggleMarkedHard} onClose={() => session.setFeedback(null)} onNext={session.next} />}</AnimatePresence>
+      <AnimatePresence>
+        {session.feedback && (
+          <FeedbackSheet
+            feedback={session.feedback}
+            markedHard={session.markedHard}
+            onToggleHard={session.toggleMarkedHard}
+            onClose={() => session.setFeedback(null)}
+            onNext={() => {
+              if (session.index === session.totalQuestions - 1) {
+                // Determine next lesson
+                const nextId = getNextLessonId(lessonId);
+                if (nextId) {
+                  session.setFeedback(null);
+                  showToast("Chúc mừng! Đang chuyển sang bài tiếp theo...", "success");
+                  onLessonComplete?.(nextId);
+                } else {
+                  session.setFeedback(null);
+                  showToast("Chúc mừng! Bạn đã hoàn thành toàn bộ lộ trình học này.", "success");
+                  onBack();
+                }
+              } else {
+                session.next();
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
