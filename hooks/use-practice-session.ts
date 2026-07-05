@@ -6,10 +6,12 @@ import type { Feedback, PracticeMode } from "@/types";
 import { isAcceptedAnswer, shuffle } from "@/utils/answer";
 import { useAnswerAudioFeedback } from "@/hooks/useAnswerAudioFeedback";
 import { useAuth } from "@/hooks/useAuth";
+import { useMembership } from "@/hooks/useMembership";
 import { recordPracticeAttempt, setSentenceMarkedHard } from "@/services/progressService";
 
 export function usePracticeSession(initialMode: PracticeMode, lessonId?: string | null) {
   const { profile, refreshProfile, showToast } = useAuth();
+  const { plan, isLimitReached, checkFeatureAccess, triggerLimitModal } = useMembership();
   const [mode, setMode] = useState<PracticeMode>(initialMode);
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -69,11 +71,20 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
   }, [index, mode]);
 
   const changeMode = useCallback((nextMode: PracticeMode) => {
+    if (nextMode === "speaking") {
+      const hasAccess = checkFeatureAccess("speaking");
+      if (!hasAccess) return;
+    }
     setMode(nextMode);
     resetQuestion();
-  }, [resetQuestion]);
+  }, [resetQuestion, checkFeatureAccess]);
 
   const submit = useCallback(async () => {
+    if (isLimitReached) {
+      triggerLimitModal();
+      return;
+    }
+
     const submitted = mode === "word-bank" ? selectedWords.map((item) => item.word).join(" ") : answer;
     const expected = mode === "reverse" ? sentence.vietnamese : sentence.english;
     const alternatives = mode === "reverse" ? [] : sentence.alternativeAnswers;
@@ -94,6 +105,8 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
     }).then((result) => {
       setExp(result.exp);
       void refreshProfile();
+      // Record answer count locally on the client for instant limit reaction
+      window.dispatchEvent(new Event("sentence_answer_recorded"));
     }).catch(() => {
       showToast("Kết quả đã chấm nhưng chưa thể đồng bộ. Vui lòng kiểm tra kết nối.", "error");
     });
@@ -127,22 +140,35 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
       example: sentence.alternativeAnswers[0] || "Hãy nói lại cả câu với nhịp đều.",
     });
 
-    try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ submitted, sentence }),
-      });
-      if (response.ok) {
-        const aiFeedback = await response.json();
-        setFeedback((current) => current ? { ...current, ...aiFeedback, correct: false, correctAnswer: expected } : current);
+    const isPro = plan === "pro" || plan === "premium";
+    if (isPro) {
+      try {
+        const response = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ submitted, sentence }),
+        });
+        if (response.ok) {
+          const aiFeedback = await response.json();
+          setFeedback((current) => current ? { ...current, ...aiFeedback, correct: false, correctAnswer: expected } : current);
+        }
+      } catch {
+        // Local feedback is intentionally kept when AI is unavailable.
       }
-    } catch {
-      // Local feedback is intentionally kept when AI is unavailable.
+    } else {
+      setFeedback((current) => current ? {
+        ...current,
+        explanation: "💡 Hãy nâng cấp tài khoản PRO để nhận phân tích chi tiết lỗi sai và gợi ý sửa ngữ pháp từ AI trợ lý học tập."
+      } : current);
     }
-  }, [answer, combo, mode, playFeedback, refreshProfile, selectedWords, sentence, showToast]);
+  }, [answer, combo, mode, playFeedback, refreshProfile, selectedWords, sentence, showToast, isLimitReached, triggerLimitModal, plan]);
 
   const completeSpeaking = useCallback(() => {
+    if (isLimitReached) {
+      triggerLimitModal();
+      return;
+    }
+
     void recordPracticeAttempt({
       sentenceId: sentence.id,
       lessonId: sentence.lesson,
@@ -154,10 +180,11 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
     }).then((result) => {
       setExp(result.exp);
       void refreshProfile();
+      window.dispatchEvent(new Event("sentence_answer_recorded"));
     }).catch(() => {
       showToast("Chưa thể đồng bộ lượt luyện nói này.", "error");
     });
-  }, [refreshProfile, sentence, showToast]);
+  }, [refreshProfile, sentence, showToast, isLimitReached, triggerLimitModal]);
 
   const toggleMarkedHard = useCallback(async () => {
     const nextValue = !markedHard;

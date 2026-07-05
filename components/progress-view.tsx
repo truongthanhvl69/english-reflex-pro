@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, ArrowUpRight, Brain, CheckCircle2, Clock3, Flame, RotateCcw, Sparkles, Star, Target, TrendingUp, XCircle } from "lucide-react";
 import { MobileHeader } from "@/components/sidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { useMembership } from "@/hooks/useMembership";
 import { sentences } from "@/data/sentences";
 import { getSentenceHistory, type SentenceHistory } from "@/services/progressService";
 
@@ -11,6 +12,7 @@ const sentenceText = new Map(sentences.map((sentence) => [sentence.id, sentence.
 
 export function ProgressView({ onMenu }: { onMenu: () => void }) {
   const { profile, showToast } = useAuth();
+  const { checkFeatureAccess } = useMembership();
   const [history, setHistory] = useState<SentenceHistory[]>([]);
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export function ProgressView({ onMenu }: { onMenu: () => void }) {
     { label: "Tổng EXP", value: (profile?.exp ?? 0).toLocaleString("vi-VN"), detail: `Level ${profile?.level ?? 1}`, icon: Star, color: "violet" },
   ];
 
-  return <><MobileHeader onMenu={onMenu} title="Tiến bộ" /><div className="page progress-page"><header className="page-title-row"><div><span className="eyebrow">PHÂN TÍCH HỌC TẬP</span><h1>Tiến trình của riêng bạn</h1><p>Dữ liệu được đồng bộ an toàn theo tài khoản trên mọi thiết bị.</p></div><button className="button button-secondary"><RotateCcw size={17} /> Ôn tập thông minh</button></header>
+  return <><MobileHeader onMenu={onMenu} title="Tiến bộ" /><div className="page progress-page"><header className="page-title-row"><div><span className="eyebrow">PHÂN TÍCH HỌC TẬP</span><h1>Tiến trình của riêng bạn</h1><p>Dữ liệu được đồng bộ an toàn theo tài khoản trên mọi thiết bị.</p></div><button className="button button-secondary" onClick={() => checkFeatureAccess("smart-review")}><RotateCcw size={17} /> Ôn tập thông minh</button></header>
     <div className="stats-grid">{stats.map(({ label, value, detail, icon: Icon, color }) => <div className="stat-card" key={label}><div className={`stat-icon ${color}`}><Icon size={20} /></div><span>{label}</span><strong>{value}</strong><small><TrendingUp size={13} /> {detail}</small></div>)}</div>
     <div className="analytics-grid"><section className="analytics-card chart-card"><div className="analytics-heading"><div><h2>Hoạt động luyện tập</h2><p>Số câu đã trả lời trong 14 ngày</p></div></div><div className="big-chart"><div className="chart-y"><span>{maxActivity}</span><span>{Math.round(maxActivity * .66)}</span><span>{Math.round(maxActivity * .33)}</span><span>0</span></div><div className="chart-bars">{activity.map(({ date, value }, index) => <div key={date.toISOString()}><i style={{ height: `${(value / maxActivity) * 100}%` }} className={index === activity.length - 1 ? "latest" : ""} /><span>{index % 2 === 0 ? `${date.getDate()}/${date.getMonth() + 1}` : ""}</span></div>)}</div></div></section>
       <section className="analytics-card accuracy-card"><div className="analytics-heading"><div><h2>Tổng quan đáp án</h2><p>Toàn bộ lịch sử tài khoản</p></div><ArrowUpRight size={19} /></div><div className="accuracy-ring" style={{ background: `conic-gradient(var(--primary) 0 ${accuracy}%, #edf0f5 ${accuracy}%)` }}><div><strong>{accuracy.toFixed(0)}%</strong><span>Chính xác</span></div></div><div className="accuracy-legend"><span><i className="correct" /> Đúng <b>{profile?.correct_answers ?? 0}</b></span><span><i className="wrong" /> Sai <b>{wrongAnswers}</b></span></div></section>

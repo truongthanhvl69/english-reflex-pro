@@ -13,7 +13,7 @@ export interface UserProfile {
   accuracy: number;
   total_answers: number;
   correct_answers: number;
-  subscription_tier: "free" | "pro";
+  subscription_tier: "free" | "pro" | "premium";
   created_at: string;
   updated_at: string;
 }

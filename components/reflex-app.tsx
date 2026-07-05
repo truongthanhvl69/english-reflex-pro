@@ -9,6 +9,7 @@ import { PracticeStudio } from "@/components/practice-studio";
 import { ProgressView } from "@/components/progress-view";
 import { LeaderboardView } from "@/components/leaderboard-view";
 import { AudioSettings } from "@/components/settings/AudioSettings";
+import { UpgradeModal } from "@/components/subscription/UpgradeModal";
 import type { AppView, PracticeMode } from "@/types";
 
 export function ReflexApp() {
@@ -51,6 +52,7 @@ export function ReflexApp() {
           </motion.div>
         </AnimatePresence>
       </main>
+      <UpgradeModal />
     </div>
   );
 }
