@@ -32,8 +32,7 @@ function googleProfile(user: User) {
 }
 
 export async function signInWithGoogle(nextPath = "/") {
-  const configuredSite = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  const siteUrl = configuredSite || window.location.origin;
+  const siteUrl = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
   const safeNext = nextPath.startsWith("/") ? nextPath : "/";
 
   localStorage.setItem("english_reflex_oauth_pending", "true");
