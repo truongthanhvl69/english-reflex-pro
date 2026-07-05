@@ -21,8 +21,8 @@ const modeOptions: { id: PracticeMode; label: string; icon: typeof Keyboard }[] 
   { id: "speaking", label: "Phát âm", icon: Mic2 },
 ];
 
-export function PracticeStudio({ initialMode, onBack, onMenu }: { initialMode: PracticeMode; onBack: () => void; onMenu: () => void }) {
-  const session = usePracticeSession(initialMode);
+export function PracticeStudio({ initialMode, lessonId, onBack, onMenu }: { initialMode: PracticeMode; lessonId?: string | null; onBack: () => void; onMenu: () => void }) {
+  const session = usePracticeSession(initialMode, lessonId);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [showIpa, setShowIpa] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
@@ -85,7 +85,7 @@ export function PracticeStudio({ initialMode, onBack, onMenu }: { initialMode: P
       <header className="practice-topbar">
         <button className="practice-menu" onClick={onMenu}><Menu size={20} /></button>
         <button className="back-link" onClick={onBack}><ArrowLeft size={18} /> Thoát bài</button>
-        <div className="practice-progress-wrap"><div className="practice-progress-label"><span>A1 · Bài 01</span><b>{session.index + 1}/10</b></div><div className="practice-progress"><motion.i animate={{ width: `${session.progress}%` }} /></div></div>
+        <div className="practice-progress-wrap"><div className="practice-progress-label"><span>{session.lessonLabel}</span><b>{session.index + 1}/{session.totalQuestions}</b></div><div className="practice-progress"><motion.i animate={{ width: `${session.progress}%` }} /></div></div>
         <div className="practice-stats"><span className="combo-chip"><Zap size={15} fill="currentColor" /> {session.combo} combo</span><span><Star size={16} fill="currentColor" /> {session.exp} EXP</span></div>
         <button className="icon-button"><Settings2 size={19} /></button>
       </header>

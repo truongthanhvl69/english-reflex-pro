@@ -14,10 +14,12 @@ import type { AppView, PracticeMode } from "@/types";
 export function ReflexApp() {
   const [view, setView] = useState<AppView>("home");
   const [practiceMode, setPracticeMode] = useState<PracticeMode>("typing");
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const openPractice = (mode: PracticeMode) => {
+  const openPractice = (mode: PracticeMode, lessonId?: string) => {
     setPracticeMode(mode);
+    setSelectedLessonId(lessonId || null);
     setView("practice");
     setMobileNavOpen(false);
   };
@@ -40,9 +42,9 @@ export function ReflexApp() {
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.22 }}
           >
-            {view === "home" && <Dashboard onStart={openPractice} onMenu={() => setMobileNavOpen(true)} onNavigate={setView} />}
-            {view === "courses" && <CourseLibrary onStart={() => openPractice("typing")} onMenu={() => setMobileNavOpen(true)} />}
-            {view === "practice" && <PracticeStudio initialMode={practiceMode} onBack={() => setView("home")} onMenu={() => setMobileNavOpen(true)} />}
+            {view === "home" && <Dashboard onStart={(mode) => openPractice(mode)} onMenu={() => setMobileNavOpen(true)} onNavigate={setView} />}
+            {view === "courses" && <CourseLibrary onStart={(lessonId) => openPractice("typing", lessonId)} onMenu={() => setMobileNavOpen(true)} />}
+            {view === "practice" && <PracticeStudio initialMode={practiceMode} lessonId={selectedLessonId} onBack={() => setView("courses")} onMenu={() => setMobileNavOpen(true)} />}
             {view === "progress" && <ProgressView onMenu={() => setMobileNavOpen(true)} />}
             {view === "leaderboard" && <LeaderboardView onMenu={() => setMobileNavOpen(true)} />}
             {view === "settings" && <AudioSettings onMenu={() => setMobileNavOpen(true)} />}

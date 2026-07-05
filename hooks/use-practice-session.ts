@@ -8,7 +8,7 @@ import { useAnswerAudioFeedback } from "@/hooks/useAnswerAudioFeedback";
 import { useAuth } from "@/hooks/useAuth";
 import { recordPracticeAttempt, setSentenceMarkedHard } from "@/services/progressService";
 
-export function usePracticeSession(initialMode: PracticeMode) {
+export function usePracticeSession(initialMode: PracticeMode, lessonId?: string | null) {
   const { profile, refreshProfile, showToast } = useAuth();
   const [mode, setMode] = useState<PracticeMode>(initialMode);
   const [index, setIndex] = useState(0);
@@ -23,7 +23,30 @@ export function usePracticeSession(initialMode: PracticeMode) {
 
   const { playFeedback } = useAnswerAudioFeedback();
 
-  const sentence = sentences[index % sentences.length];
+  const filteredSentences = useMemo(() => {
+    if (!lessonId) return sentences;
+    const [courseId, lessonNum] = lessonId.split("-");
+    if (courseId && lessonNum) {
+      const targetLesson = `${courseId.toUpperCase()} - Bài ${lessonNum.padStart(2, "0")}`;
+      const matched = sentences.filter((s) => s.lesson === targetLesson);
+      if (matched.length > 0) return matched;
+    }
+    return sentences;
+  }, [lessonId]);
+
+  const sentence = filteredSentences[index % filteredSentences.length];
+
+  const lessonLabel = useMemo(() => {
+    if (!lessonId) return "Luyện tập tổng hợp";
+    const [courseId, lessonNum] = lessonId.split("-");
+    const num = Number(lessonNum);
+    if (courseId === "a1" && num >= 1 && num <= 10) {
+      const subtitles = ["Chào hỏi & giới thiệu", "Gia đình & bạn bè", "Thói quen mỗi ngày", "Ăn uống", "Mua sắm", "Thời gian", "Công việc", "Di chuyển", "Sở thích", "Ôn tập phản xạ"];
+      return `A1 · Bài ${String(num).padStart(2, "0")}: ${subtitles[num - 1]}`;
+    }
+    return `Bài học ${lessonId.toUpperCase()}`;
+  }, [lessonId]);
+
   const shuffledWords = useMemo(
     () => shuffle(sentence.wordBank.map((word, wordIndex) => ({ id: wordIndex, word }))),
     [sentence],
@@ -149,19 +172,21 @@ export function usePracticeSession(initialMode: PracticeMode) {
   }, [markedHard, sentence.id, showToast]);
 
   const next = useCallback(() => {
-    setIndex((value) => (value + 1) % sentences.length);
+    setIndex((value) => (value + 1) % filteredSentences.length);
     resetQuestion();
-  }, [resetQuestion]);
+  }, [resetQuestion, filteredSentences.length]);
 
   const previous = useCallback(() => {
-    setIndex((value) => (value - 1 + sentences.length) % sentences.length);
+    setIndex((value) => (value - 1 + filteredSentences.length) % filteredSentences.length);
     resetQuestion();
-  }, [resetQuestion]);
+  }, [resetQuestion, filteredSentences.length]);
 
   return {
     mode, changeMode, index, sentence, answer, setAnswer, selectedWords, setSelectedWords,
     shuffledWords, feedback, setFeedback, exp, combo, correctCount, submit, next, previous,
     markedHard, toggleMarkedHard, completeSpeaking,
-    progress: ((index + 1) / 10) * 100,
+    lessonLabel,
+    totalQuestions: filteredSentences.length,
+    progress: ((index + 1) / filteredSentences.length) * 100,
   };
 }
