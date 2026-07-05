@@ -18,3 +18,26 @@ export const lessons = Array.from({ length: 10 }, (_, index) => ({
   progress: index < 3 ? 100 : index === 3 ? 35 : 0,
   exp: 80 + index * 10,
 }));
+
+export const dailyLessons = Array.from({ length: 12 }, (_, index) => ({
+  id: `daily-${index + 1}`,
+  title: `Bài ${String(index + 1).padStart(2, "0")}`,
+  subtitle: [
+    "Chào hỏi xã giao",
+    "Giới thiệu bản thân",
+    "Giao tiếp cơ bản",
+    "Liên lạc & Lịch sự",
+    "Lời mời & Thời gian",
+    "Cảm xúc & Ý kiến",
+    "Ý kiến & Đồng thuận",
+    "Mua sắm & Hỏi đường",
+    "Di chuyển & Hành động",
+    "Sở thích & Ưa chuộng",
+    "Hoạt động & Thời gian",
+    "Lời chúc & Động viên"
+  ][index] || "Giao tiếp tự nhiên",
+  completed: false,
+  locked: false,
+  progress: 0,
+  exp: 100,
+}));

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, ChevronDown, Clock3, LockKeyhole, Play, Search, SlidersHorizontal, Sparkles, Star } from "lucide-react";
-import { courses, lessons } from "@/data/courses";
+import { courses, lessons, dailyLessons } from "@/data/courses";
 import { MobileHeader } from "@/components/sidebar";
 
 export function CourseLibrary({ onStart, onMenu }: { onStart: (lessonId: string) => void; onMenu: () => void }) {
@@ -34,11 +34,29 @@ export function CourseLibrary({ onStart, onMenu }: { onStart: (lessonId: string)
             <div className={`lesson-cover ${selected.color}`}><div><span>{selected.icon}</span><i>{selected.level}</i></div><h2>{selected.title}</h2><p>{selected.description}</p><div><span><Clock3 size={14} /> ~8 phút/bài</span><span><Star size={14} /> +{selected.lessons * 100} EXP</span></div></div>
             <div className="lesson-panel-heading"><div><h3>Danh sách bài học</h3><p>{selected.lessons} bài · {selected.sentences} câu</p></div><button><ChevronDown size={18} /></button></div>
             <div className="lesson-list">
-              {selected.id === "a1" ? lessons.map((lesson, index) => <button key={lesson.id} disabled={lesson.locked} onClick={() => onStart(lesson.id)} className={lesson.progress > 0 && !lesson.completed ? "current" : ""}>
-                <span className={`lesson-status ${lesson.completed ? "done" : lesson.locked ? "locked" : "ready"}`}>{lesson.completed ? <Check size={16} /> : lesson.locked ? <LockKeyhole size={14} /> : <Play size={14} fill="currentColor" />}</span>
-                <div><strong>{lesson.title}: {lesson.subtitle}</strong><span>{lesson.progress > 0 ? `${lesson.progress}% hoàn thành` : `${10 + index * 2} câu · +${lesson.exp} EXP`}</span></div>
-                {lesson.progress > 0 && <div className="lesson-mini-progress"><i style={{ width: `${lesson.progress}%` }} /></div>}
-              </button>) : <div className="empty-lessons"><Sparkles size={28} /><h3>Lộ trình đang được tinh chỉnh</h3><p>Chọn Nền tảng A1 để trải nghiệm các bài học mẫu.</p></div>}
+              {selected.id === "a1" ? (
+                lessons.map((lesson, index) => (
+                  <button key={lesson.id} disabled={lesson.locked} onClick={() => onStart(lesson.id)} className={lesson.progress > 0 && !lesson.completed ? "current" : ""}>
+                    <span className={`lesson-status ${lesson.completed ? "done" : lesson.locked ? "locked" : "ready"}`}>{lesson.completed ? <Check size={16} /> : lesson.locked ? <LockKeyhole size={14} /> : <Play size={14} fill="currentColor" />}</span>
+                    <div><strong>{lesson.title}: {lesson.subtitle}</strong><span>{lesson.progress > 0 ? `${lesson.progress}% hoàn thành` : `${10 + index * 2} câu · +${lesson.exp} EXP`}</span></div>
+                    {lesson.progress > 0 && <div className="lesson-mini-progress"><i style={{ width: `${lesson.progress}%` }} /></div>}
+                  </button>
+                ))
+              ) : selected.id === "daily" ? (
+                dailyLessons.map((lesson, index) => (
+                  <button key={lesson.id} disabled={lesson.locked} onClick={() => onStart(lesson.id)} className={lesson.progress > 0 && !lesson.completed ? "current" : ""}>
+                    <span className={`lesson-status ${lesson.completed ? "done" : lesson.locked ? "locked" : "ready"}`}>{lesson.completed ? <Check size={16} /> : lesson.locked ? <LockKeyhole size={14} /> : <Play size={14} fill="currentColor" />}</span>
+                    <div><strong>{lesson.title}: {lesson.subtitle}</strong><span>{lesson.progress > 0 ? `${lesson.progress}% hoàn thành` : `10 câu · +${lesson.exp} EXP`}</span></div>
+                    {lesson.progress > 0 && <div className="lesson-mini-progress"><i style={{ width: `${lesson.progress}%` }} /></div>}
+                  </button>
+                ))
+              ) : (
+                <div className="empty-lessons">
+                  <Sparkles size={28} />
+                  <h3>Lộ trình đang được tinh chỉnh</h3>
+                  <p>Chọn Nền tảng A1 hoặc Giao tiếp hằng ngày để trải nghiệm các bài học mẫu.</p>
+                </div>
+              )}
             </div>
           </aside>
         </section>
