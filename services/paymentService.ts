@@ -66,7 +66,6 @@ export const PaymentService = {
     const expiredAt = new Date();
     expiredAt.setMonth(expiredAt.getMonth() + durationMonths);
 
-    // 1. Insert or update the membership record
     const { data: membership, error: memError } = await supabaseAdmin
       .from("memberships")
       .upsert({
@@ -77,7 +76,7 @@ export const PaymentService = {
         expired_at: expiredAt.toISOString(),
         provider,
         subscription_id: subscriptionId || `sub_mock_${Date.now()}`,
-      })
+      }, { onConflict: "user_id" })
       .select("*")
       .single();
 
