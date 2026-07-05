@@ -10,6 +10,8 @@ import {
   getSession,
   signInWithGoogle as startGoogleLogin,
   signOut as endSession,
+  registerWithEmail,
+  loginWithEmail,
   type UserProfile,
 } from "@/services/authService";
 import { AuthContext, type ToastKind } from "@/hooks/useAuth";
@@ -126,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: "guest@englishreflex.pro",
       full_name: "Minh Nguyễn",
       avatar_url: null,
+      provider: "email",
       exp: 1240,
       level: 8,
       streak: 7,
@@ -155,6 +158,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [showToast]);
 
+  const translateError = (err: any): string => {
+    const msg = err?.message || "";
+    if (msg.includes("User already registered")) {
+      return "Email này đã được đăng ký sử dụng.";
+    }
+    if (msg.includes("Invalid login credentials") || msg.includes("invalid_credentials")) {
+      return "Tài khoản hoặc mật khẩu không chính xác.";
+    }
+    if (msg.includes("Password should be at least 6 characters")) {
+      return "Mật khẩu phải có độ dài tối thiểu 6 ký tự.";
+    }
+    return msg || "Đã xảy ra lỗi, vui lòng thử lại.";
+  };
+
+  const signUpWithEmail = useCallback(async (fullName: string, email: string, password: string) => {
+    try {
+      setLoading(true);
+      const signUpData = await registerWithEmail({ fullName, email, password });
+      if (signUpData.session) {
+        await hydrateSession(signUpData.session);
+      } else {
+        const signInData = await loginWithEmail({ email, password });
+        if (signInData.session) {
+          await hydrateSession(signInData.session);
+        }
+      }
+      showToast("Đăng ký thành công!", "success");
+    } catch (e: any) {
+      console.error("SignUp error:", e);
+      showToast(translateError(e), "error");
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  }, [hydrateSession, showToast]);
+
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const signInData = await loginWithEmail({ email, password });
+      if (signInData.session) {
+        await hydrateSession(signInData.session);
+        showToast("Đăng nhập thành công!", "success");
+      }
+    } catch (e: any) {
+      console.error("SignIn error:", e);
+      showToast(translateError(e), "error");
+      throw e;
+    } finally {
+      setLoading(false);
+    }
+  }, [hydrateSession, showToast]);
+
   const refreshProfile = useCallback(async () => {
     if (localStorage.getItem("english_reflex_mock_user")) return; // skip for mock user
     if (!session?.user.id) return;
@@ -167,11 +223,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     profile,
     loading,
     signInWithGoogle: login,
+    loginWithGoogle: login,
     signInWithMock: loginMock,
     signOut: logout,
+    logout: logout,
+    signUpWithEmail,
+    signInWithEmail,
     refreshProfile,
     showToast,
-  }), [loading, login, loginMock, logout, profile, refreshProfile, session, showToast]);
+  }), [loading, login, loginMock, logout, profile, refreshProfile, session, showToast, signUpWithEmail, signInWithEmail]);
 
   const ToastIcon =
     toast?.kind === "success" ? CheckCircle2 :

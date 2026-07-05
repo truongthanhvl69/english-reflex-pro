@@ -6,6 +6,7 @@ export interface UserProfile {
   email: string | null;
   full_name: string;
   avatar_url: string | null;
+  provider: "google" | "email";
   exp: number;
   level: number;
   streak: number;
@@ -40,6 +41,10 @@ export async function signInWithGoogle(nextPath = "/") {
     provider: "google",
     options: {
       redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(safeNext)}`,
+      queryParams: {
+        access_type: "online",
+        prompt: "select_account",
+      },
     },
   });
 
@@ -89,4 +94,43 @@ export async function getProfile(userId: string): Promise<UserProfile> {
 
   if (error) throw error;
   return data as UserProfile;
+}
+
+export async function registerWithEmail({ fullName, email, password }: any) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName,
+      },
+    },
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function loginWithEmail({ email, password }: any) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function loginWithGoogle(nextPath = "/") {
+  return signInWithGoogle(nextPath);
+}
+
+export async function logout() {
+  return signOut();
+}
+
+export async function getCurrentUser() {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) return null;
+  return user;
 }

@@ -3,11 +3,11 @@
 import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BookOpenCheck, Cloud, GraduationCap, ShieldCheck, Sparkles } from "lucide-react";
-import { LoginButton } from "@/components/auth/LoginButton";
+import { LoginForm } from "@/components/auth/LoginForm";
 import { useAuth } from "@/hooks/useAuth";
 
 function LoginContent() {
-  const { user, loading, signInWithMock } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedNext = searchParams.get("next") || "/";
@@ -34,41 +34,7 @@ function LoginContent() {
       </section>
 
       <section className="login-panel">
-        <div className="login-card">
-          <div className="login-card-icon"><GraduationCap size={30} /></div>
-          <span className="eyebrow">CHÀO MỪNG BẠN</span>
-          <h2>Đăng nhập để tiếp tục</h2>
-          <p>Dùng Gmail hoặc Google Account. Nếu đây là lần đầu, tài khoản học sẽ được tạo tự động.</p>
-          
-          <LoginButton nextPath={nextPath} label="Tiếp tục với Gmail" />
-          
-          <button 
-            className="mock-login-button" 
-            onClick={() => signInWithMock && signInWithMock()}
-            style={{
-              marginTop: "12px",
-              width: "100%",
-              padding: "12px",
-              borderRadius: "12px",
-              background: "var(--primary-soft)",
-              border: "1px dashed var(--primary)",
-              color: "var(--primary)",
-              fontWeight: 600,
-              fontSize: "14px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-              transition: "background 0.2s"
-            }}
-          >
-            <span>Đăng nhập thử nghiệm (Local Bypass)</span>
-          </button>
-
-          <div className="login-security"><ShieldCheck size={15} /> English Reflex không bao giờ thấy mật khẩu Google của bạn.</div>
-          <small>Bằng việc tiếp tục, bạn đồng ý lưu dữ liệu học tập theo tài khoản này.</small>
-        </div>
+        <LoginForm nextPath={nextPath} />
       </section>
     </main>
   );

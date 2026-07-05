@@ -10,8 +10,12 @@ export interface AuthContextValue {
   profile: UserProfile | null;
   loading: boolean;
   signInWithGoogle: (nextPath?: string) => Promise<void>;
+  loginWithGoogle: (nextPath?: string) => Promise<void>;
   signInWithMock?: () => Promise<void>;
   signOut: () => Promise<void>;
+  logout: () => Promise<void>;
+  signUpWithEmail: (fullName: string, email: string, password: string) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
   showToast: (message: string, kind?: ToastKind) => void;
 }
