@@ -261,7 +261,7 @@ function toDailySentence(seed: Seed, index: number): Sentence {
     english,
     vietnamese,
     ipa: "",
-    level: "A1–A2",
+    level: "A1",
     category: categories[index % categories.length],
     lesson: lessonStr,
     partOfSpeech: "",
