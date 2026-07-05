@@ -67,3 +67,22 @@ export async function getSentenceHistory(limit = 500): Promise<SentenceHistory[]
   if (error) throw error;
   return (data ?? []) as SentenceHistory[];
 }
+
+export interface UserProgressData {
+  lesson_id: string;
+  is_completed: boolean;
+  completed_sentence_ids: string[];
+  total_answers: number;
+  correct_answers: number;
+  accuracy: number;
+  is_unlocked: boolean;
+}
+
+export async function getUserProgress(): Promise<UserProgressData[]> {
+  const { data, error } = await supabase
+    .from("user_progress")
+    .select("lesson_id, is_completed, completed_sentence_ids, total_answers, correct_answers, accuracy, is_unlocked");
+
+  if (error) throw error;
+  return (data ?? []) as UserProgressData[];
+}

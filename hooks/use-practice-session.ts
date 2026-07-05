@@ -9,6 +9,37 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMembership } from "@/hooks/useMembership";
 import { recordPracticeAttempt, setSentenceMarkedHard } from "@/services/progressService";
 
+function cleanLessonId(rawLesson: string, currentLessonId?: string | null): string {
+  if (currentLessonId) return currentLessonId;
+  const match = rawLesson.match(/^([^-]+)\s*-\s*Bài\s*(\d+)/i);
+  if (match) {
+    const courseCode = match[1].trim().toLowerCase();
+    const num = Number(match[2]);
+    return `${courseCode}-${num}`;
+  }
+  return rawLesson;
+}
+
+function getNextLessonId(currentId?: string | null): string | null {
+  if (!currentId) return null;
+  const parts = currentId.split("-");
+  if (parts.length !== 2) return null;
+  const courseCode = parts[0];
+  const num = Number(parts[1]);
+  if (isNaN(num)) return null;
+
+  let maxLessons = 10;
+  if (courseCode === "daily") maxLessons = 12;
+  else if (courseCode === "office") maxLessons = 14;
+  else if (courseCode === "phrases") maxLessons = 50;
+  else if (courseCode === "collocations") maxLessons = 18;
+
+  if (num < maxLessons) {
+    return `${courseCode}-${num + 1}`;
+  }
+  return null;
+}
+
 export function usePracticeSession(initialMode: PracticeMode, lessonId?: string | null) {
   const { profile, refreshProfile, showToast } = useAuth();
   const { plan, isLimitReached, checkFeatureAccess, triggerLimitModal } = useMembership();
@@ -94,19 +125,20 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
     const expected = mode === "reverse" ? sentence.vietnamese : sentence.english;
     const alternatives = mode === "reverse" ? [] : sentence.alternativeAnswers;
     const correct = isAcceptedAnswer(submitted, [expected, ...alternatives]);
-    const lessonNumber = Number(sentence.lesson.match(/(\d+)$/)?.[1] ?? 1);
-    const nextLessonId = sentence.lesson.replace(/\d+$/, String(lessonNumber + 1).padStart(2, "0"));
+    
+    const cleanId = cleanLessonId(sentence.lesson, lessonId);
+    const nextLessonId = getNextLessonId(cleanId);
     const responseTimeMs = performance.now() - questionStartedAt.current;
 
     void recordPracticeAttempt({
       sentenceId: sentence.id,
-      lessonId: sentence.lesson,
+      lessonId: cleanId,
       mode,
       submittedAnswer: submitted,
       correctAnswer: expected,
       isCorrect: correct,
       responseTimeMs,
-      nextLessonId,
+      nextLessonId: nextLessonId || undefined,
     }).then((result) => {
       setExp(result.exp);
       void refreshProfile();
@@ -174,14 +206,18 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
       return;
     }
 
+    const cleanId = cleanLessonId(sentence.lesson, lessonId);
+    const nextLessonId = getNextLessonId(cleanId);
+
     void recordPracticeAttempt({
       sentenceId: sentence.id,
-      lessonId: sentence.lesson,
+      lessonId: cleanId,
       mode: "speaking",
       submittedAnswer: sentence.english,
       correctAnswer: sentence.english,
       isCorrect: true,
       responseTimeMs: performance.now() - questionStartedAt.current,
+      nextLessonId: nextLessonId || undefined,
     }).then((result) => {
       setExp(result.exp);
       void refreshProfile();
