@@ -96,6 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (nextPath = "/") => {
     try {
+      showToast("Đang kết nối... Bạn sẽ được chuyển sang Google để đăng nhập an toàn. Một số tài khoản có thể cần xác minh danh tính lần đầu.", "info");
+      await new Promise((resolve) => setTimeout(resolve, 800));
       await startGoogleLogin(nextPath);
     } catch {
       showToast("Không thể đăng nhập. Vui lòng thử lại.", "error");
