@@ -6,7 +6,7 @@ import {
   ArrowLeft, ArrowRight, BookOpen, Bot, Check, ChevronDown, ChevronLeft, ChevronRight,
   CircleAlert, Eraser, Flag, Gauge, Headphones, HelpCircle, Keyboard, Lightbulb, LoaderCircle,
   Menu, Mic2, Pause, Play, Puzzle, RotateCcw, Send, Settings2, Sparkles, Star, Trash2,
-  Volume2, X, Zap,
+  Volume2, X, Zap, Clock3,
 } from "lucide-react";
 import { usePracticeSession } from "@/hooks/use-practice-session";
 import { playSentence, unlockAudio, type VoiceType } from "@/services/ttsService";
@@ -35,6 +35,7 @@ function getNextLessonId(currentId?: string | null): string | null {
   else if (courseCode === "office") maxLessons = 14;
   else if (courseCode === "phrases") maxLessons = 50;
   else if (courseCode === "collocations") maxLessons = 18;
+  else if (courseCode === "continuous") maxLessons = 5;
 
   if (num < maxLessons) {
     return `${courseCode}-${num + 1}`;
@@ -45,17 +46,19 @@ function getNextLessonId(currentId?: string | null): string | null {
 export function PracticeStudio({
   initialMode,
   lessonId,
+  isReview = false,
   onBack,
   onMenu,
   onLessonComplete,
 }: {
   initialMode: PracticeMode;
   lessonId?: string | null;
+  isReview?: boolean;
   onBack: () => void;
   onMenu: () => void;
   onLessonComplete?: (nextLessonId: string) => void;
 }) {
-  const session = usePracticeSession(initialMode, lessonId);
+  const session = usePracticeSession(initialMode, lessonId, isReview);
   const { showToast } = useAuth();
   const [toolsOpen, setToolsOpen] = useState(false);
   const [showIpa, setShowIpa] = useState(false);
@@ -64,6 +67,8 @@ export function PracticeStudio({
   const [speed, setSpeed] = useState(1);
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioError, setAudioError] = useState("");
+  const [showCompletion, setShowCompletion] = useState(false);
+  const sessionStartedAt = useRef(Date.now());
 
   // Sync with global settings on mount
   useEffect(() => {
@@ -107,13 +112,133 @@ export function PracticeStudio({
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (event.key !== "Enter" || event.shiftKey || session.mode === "speaking") return;
+      if (event.key !== "Enter" || event.shiftKey || session.mode === "speaking" || showCompletion) return;
       event.preventDefault();
-      if (session.feedback) session.next(); else if (session.answer.trim() || session.selectedWords.length) void session.submit();
+      if (session.feedback) {
+        if (session.index === session.totalQuestions - 1) {
+          session.setFeedback(null);
+          setShowCompletion(true);
+        } else {
+          session.next();
+        }
+      } else if (session.answer.trim() || session.selectedWords.length) {
+        void session.submit();
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [session]);
+  }, [session, showCompletion]);
+
+  if (showCompletion) {
+    const durationSeconds = Math.max(1, Math.round((Date.now() - sessionStartedAt.current) / 1000));
+    const m = Math.floor(durationSeconds / 60);
+    const s = durationSeconds % 60;
+    const timeStr = m > 0 ? `${m} phút ${s} giây` : `${s} giây`;
+    const accuracy = Math.round((session.correctCount / session.totalQuestions) * 100);
+    const correctCount = session.correctCount;
+    const wrongCount = session.totalQuestions - correctCount;
+    const expEarned = correctCount * 10;
+    
+    const nextLessonId = getNextLessonId(lessonId);
+
+    return (
+      <div className="practice-page">
+        <header className="practice-topbar">
+          <button className="back-link" onClick={onBack}><ArrowLeft size={18} /> Thoát</button>
+          <div className="practice-progress-wrap"><div className="practice-progress-label"><span>{session.lessonLabel}</span><b>Hoàn thành!</b></div></div>
+        </header>
+
+        <div className="completion-container">
+          <div className="completion-card">
+            <span className="completion-badge">🎉</span>
+            <h1 className="completion-title">
+              {nextLessonId ? `Bạn đã hoàn thành ${session.lessonLabel}!` : "Bạn đã hoàn thành khóa học!"}
+            </h1>
+            <p className="completion-subtitle">
+              {nextLessonId ? "Tuyệt vời! Hãy tiếp tục duy trì nhịp học để rèn luyện phản xạ mỗi ngày." : "Chúc mừng! Bạn đã chinh phục toàn bộ bài học trong khóa học này."}
+            </p>
+
+            <div className="stats-grid">
+              <div className="stat-item">
+                <span className="stat-icon" style={{ color: "#22c55e" }}>✔️</span>
+                <span className="stat-value">{correctCount}</span>
+                <span className="stat-label">Câu đúng</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-icon" style={{ color: "#ef4444" }}>❌</span>
+                <span className="stat-value">{wrongCount}</span>
+                <span className="stat-label">Câu sai</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-icon" style={{ color: "#eab308" }}>🎯</span>
+                <span className="stat-value">{accuracy}%</span>
+                <span className="stat-label">Chính xác</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-icon" style={{ color: "#3b82f6" }}>🔥</span>
+                <span className="stat-value">+{expEarned}</span>
+                <span className="stat-label">EXP</span>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "32px", color: "#64748b", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+              <Clock3 size={16} /> Thời gian học: <strong>{timeStr}</strong>
+            </div>
+
+            <div className="completion-actions">
+              {nextLessonId ? (
+                <>
+                  <button 
+                    className="completion-btn primary"
+                    onClick={() => {
+                      setShowCompletion(false);
+                      sessionStartedAt.current = Date.now();
+                      session.resetPracticeState();
+                      onLessonComplete?.(nextLessonId);
+                    }}
+                  >
+                    Học bài tiếp theo <ArrowRight size={16} />
+                  </button>
+                  <button 
+                    className="completion-btn secondary"
+                    onClick={() => {
+                      setShowCompletion(false);
+                      sessionStartedAt.current = Date.now();
+                      session.resetPracticeState();
+                    }}
+                  >
+                    <RotateCcw size={15} /> Ôn lại bài này
+                  </button>
+                  <button className="completion-btn tertiary" onClick={onBack}>
+                    Về thư viện
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    className="completion-btn primary"
+                    onClick={() => {
+                      setShowCompletion(false);
+                      sessionStartedAt.current = Date.now();
+                      session.resetPracticeState();
+                    }}
+                  >
+                    <RotateCcw size={15} /> Ôn tập khóa học
+                  </button>
+                  <button className="completion-btn secondary" onClick={onBack}>
+                    Chọn khóa khác
+                  </button>
+                  <button className="completion-btn tertiary" onClick={onMenu}>
+                    Về Dashboard
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const prompt = session.mode === "reverse" ? session.sentence.english : session.sentence.vietnamese;
 
@@ -186,17 +311,8 @@ export function PracticeStudio({
             onClose={() => session.setFeedback(null)}
             onNext={() => {
               if (session.index === session.totalQuestions - 1) {
-                // Determine next lesson
-                const nextId = getNextLessonId(lessonId);
-                if (nextId) {
-                  session.setFeedback(null);
-                  showToast("Chúc mừng! Đang chuyển sang bài tiếp theo...", "success");
-                  onLessonComplete?.(nextId);
-                } else {
-                  session.setFeedback(null);
-                  showToast("Chúc mừng! Bạn đã hoàn thành toàn bộ lộ trình học này.", "success");
-                  onBack();
-                }
+                session.setFeedback(null);
+                setShowCompletion(true);
               } else {
                 session.next();
               }

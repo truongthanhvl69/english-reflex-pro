@@ -1,5 +1,6 @@
 import type { PracticeMode } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
+import { getNextLesson, unlockNextLesson } from "./learningStateService";
 
 export interface PracticeAttemptInput {
   sentenceId: string;
@@ -10,6 +11,7 @@ export interface PracticeAttemptInput {
   isCorrect: boolean;
   responseTimeMs: number;
   nextLessonId?: string;
+  sentenceIndex?: number; // Tracks index of the active sentence
 }
 
 export interface PracticeResult {
@@ -33,6 +35,7 @@ export interface SentenceHistory {
 }
 
 export async function recordPracticeAttempt(input: PracticeAttemptInput): Promise<PracticeResult> {
+  // 1. Call existing DB function (streak logic, stats update in user_progress etc.)
   const { data, error } = await supabase.rpc("record_practice_answer", {
     p_sentence_id: input.sentenceId,
     p_lesson_id: input.lessonId,
@@ -45,8 +48,117 @@ export async function recordPracticeAttempt(input: PracticeAttemptInput): Promis
   });
 
   if (error) throw error;
-  const result = Array.isArray(data) ? data[0] : data;
-  return result as PracticeResult;
+  const result = (Array.isArray(data) ? data[0] : data) as PracticeResult;
+
+  // 2. Fetch authenticated user to write custom progress states
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return result;
+
+  const userId = user.id;
+  const courseId = input.lessonId.split("-")[0] || "";
+  const lessonId = input.lessonId;
+
+  // Load existing user_lesson_progress
+  const { data: progress } = await supabase
+    .from("user_lesson_progress")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+
+  const isCorrectNum = input.isCorrect ? 1 : 0;
+  const isWrongNum = input.isCorrect ? 0 : 1;
+  const expGain = input.isCorrect ? 10 : 0; // Standard 10 EXP per correct answer
+
+  let correctCount = isCorrectNum;
+  let wrongCount = isWrongNum;
+  let expEarned = expGain;
+  let status = "in_progress";
+  let completedAt = null;
+
+  if (progress) {
+    correctCount = (progress.correct_count || 0) + isCorrectNum;
+    wrongCount = (progress.wrong_count || 0) + isWrongNum;
+    expEarned = (progress.exp_earned || 0) + expGain;
+    status = progress.status;
+    completedAt = progress.completed_at;
+  }
+
+  const totalAnswers = correctCount + wrongCount;
+  const accuracy = totalAnswers > 0 ? Number(((correctCount / totalAnswers) * 100).toFixed(2)) : 0;
+
+  const sentenceIndex = input.sentenceIndex ?? 0;
+  let nextIndex = sentenceIndex + 1;
+
+  // Since lessons contain 10 questions, when index hits 10 it is completed
+  const isLessonComplete = nextIndex >= 10;
+  if (isLessonComplete) {
+    status = "completed";
+    completedAt = new Date().toISOString();
+    nextIndex = 0; // Loop or set index back to start
+  }
+
+  // Update user_lesson_progress table
+  const { error: progErr } = await supabase
+    .from("user_lesson_progress")
+    .upsert(
+      {
+        user_id: userId,
+        course_id: courseId,
+        lesson_id: lessonId,
+        status,
+        current_sentence_index: nextIndex,
+        total_sentences: 10,
+        correct_count: correctCount,
+        wrong_count: wrongCount,
+        accuracy,
+        exp_earned: expEarned,
+        is_unlocked: true,
+        last_accessed_at: new Date().toISOString(),
+        completed_at: completedAt,
+      },
+      { onConflict: "user_id,lesson_id" }
+    );
+
+  if (progErr) {
+    console.error("Error writing user_lesson_progress:", progErr);
+  }
+
+  // Update user_learning_state table
+  let activeCourseId = courseId;
+  let activeLessonId = lessonId;
+  let activeIndex = nextIndex;
+
+  if (isLessonComplete) {
+    // Automatically find and unlock next lesson
+    const nextLessonId = getNextLesson(courseId, lessonId);
+    if (nextLessonId) {
+      await unlockNextLesson(userId, nextLessonId);
+      activeLessonId = nextLessonId;
+      activeIndex = 0;
+    }
+  }
+
+  const { error: stateErr } = await supabase
+    .from("user_learning_state")
+    .upsert(
+      {
+        user_id: userId,
+        current_course_id: activeCourseId,
+        current_lesson_id: activeLessonId,
+        current_sentence_index: activeIndex,
+        last_mode: input.mode,
+        last_route: "practice",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" }
+    );
+
+  if (stateErr) {
+    console.error("Error writing user_learning_state:", stateErr);
+  }
+
+  return result;
 }
 
 export async function setSentenceMarkedHard(sentenceId: string, markedHard: boolean) {

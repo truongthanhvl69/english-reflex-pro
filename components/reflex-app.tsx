@@ -16,11 +16,13 @@ export function ReflexApp() {
   const [view, setView] = useState<AppView>("home");
   const [practiceMode, setPracticeMode] = useState<PracticeMode>("typing");
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const [isReview, setIsReview] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  const openPractice = (mode: PracticeMode, lessonId?: string) => {
+  const openPractice = (mode: PracticeMode, lessonId?: string, review = false) => {
     setPracticeMode(mode);
     setSelectedLessonId(lessonId || null);
+    setIsReview(review);
     setView("practice");
     setMobileNavOpen(false);
   };
@@ -43,9 +45,9 @@ export function ReflexApp() {
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.22 }}
           >
-            {view === "home" && <Dashboard onStart={(mode) => openPractice(mode)} onMenu={() => setMobileNavOpen(true)} onNavigate={setView} />}
+            {view === "home" && <Dashboard onStart={(mode, lessonId) => openPractice(mode, lessonId)} onMenu={() => setMobileNavOpen(true)} onNavigate={setView} />}
             {view === "courses" && <CourseLibrary onStart={(lessonId) => openPractice("typing", lessonId)} onMenu={() => setMobileNavOpen(true)} />}
-            {view === "practice" && <PracticeStudio initialMode={practiceMode} lessonId={selectedLessonId} onBack={() => setView("courses")} onMenu={() => setMobileNavOpen(true)} onLessonComplete={(nextId) => setSelectedLessonId(nextId)} />}
+            {view === "practice" && <PracticeStudio initialMode={practiceMode} lessonId={selectedLessonId} isReview={isReview} onBack={() => setView("courses")} onMenu={() => setMobileNavOpen(true)} onLessonComplete={(nextId) => setSelectedLessonId(nextId)} />}
             {view === "progress" && <ProgressView onMenu={() => setMobileNavOpen(true)} />}
             {view === "leaderboard" && <LeaderboardView onMenu={() => setMobileNavOpen(true)} />}
             {view === "settings" && <AudioSettings onMenu={() => setMobileNavOpen(true)} />}

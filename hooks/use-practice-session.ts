@@ -8,6 +8,7 @@ import { useAnswerAudioFeedback } from "@/hooks/useAnswerAudioFeedback";
 import { useAuth } from "@/hooks/useAuth";
 import { useMembership } from "@/hooks/useMembership";
 import { recordPracticeAttempt, setSentenceMarkedHard } from "@/services/progressService";
+import { supabase } from "@/lib/supabaseClient";
 
 function cleanLessonId(rawLesson: string, currentLessonId?: string | null): string {
   if (currentLessonId) return currentLessonId;
@@ -40,11 +41,51 @@ function getNextLessonId(currentId?: string | null): string | null {
   return null;
 }
 
-export function usePracticeSession(initialMode: PracticeMode, lessonId?: string | null) {
+export function usePracticeSession(initialMode: PracticeMode, lessonId?: string | null, isReview = false) {
   const { profile, refreshProfile, showToast } = useAuth();
   const { plan, isLimitReached, checkFeatureAccess, triggerLimitModal } = useMembership();
   const [mode, setMode] = useState<PracticeMode>(initialMode);
   const [index, setIndex] = useState(0);
+
+  // Load saved progress and mode if resuming
+  useEffect(() => {
+    if (!lessonId || isReview) return;
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+
+      // Check if this lesson progress is already completed
+      supabase
+        .from("user_lesson_progress")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("lesson_id", lessonId)
+        .maybeSingle()
+        .then(({ data: progress }) => {
+          if (progress?.status === "completed") {
+            // If already completed, start from 0
+            return;
+          }
+
+          // Otherwise, restore the state
+          supabase
+            .from("user_learning_state")
+            .select("current_lesson_id, current_sentence_index, last_mode")
+            .eq("user_id", user.id)
+            .maybeSingle()
+            .then(({ data }) => {
+              if (data && data.current_lesson_id === lessonId) {
+                if (data.current_sentence_index > 0 && data.current_sentence_index < 10) {
+                  setIndex(data.current_sentence_index);
+                }
+                if (data.last_mode) {
+                  setMode(data.last_mode as PracticeMode);
+                }
+              }
+            });
+        });
+    });
+  }, [lessonId, isReview]);
   const [answer, setAnswer] = useState("");
   const [selectedWords, setSelectedWords] = useState<{ id: number; word: string }[]>([]);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -139,6 +180,7 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
       isCorrect: correct,
       responseTimeMs,
       nextLessonId: nextLessonId || undefined,
+      sentenceIndex: index,
     }).then((result) => {
       setExp(result.exp);
       void refreshProfile();
@@ -218,6 +260,7 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
       isCorrect: true,
       responseTimeMs: performance.now() - questionStartedAt.current,
       nextLessonId: nextLessonId || undefined,
+      sentenceIndex: index,
     }).then((result) => {
       setExp(result.exp);
       void refreshProfile();
@@ -249,11 +292,20 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
     resetQuestion();
   }, [resetQuestion, filteredSentences.length]);
 
+  const resetPracticeState = useCallback(() => {
+    setIndex(0);
+    setCorrectCount(0);
+    setFeedback(null);
+    setAnswer("");
+    setSelectedWords([]);
+  }, []);
+
   return {
-    mode, changeMode, index, sentence, answer, setAnswer, selectedWords, setSelectedWords,
+    mode, changeMode, index, setIndex, sentence, answer, setAnswer, selectedWords, setSelectedWords,
     shuffledWords, feedback, setFeedback, exp, combo, correctCount, submit, next, previous,
     markedHard, toggleMarkedHard, completeSpeaking,
     lessonLabel,
+    resetPracticeState,
     totalQuestions: filteredSentences.length,
     progress: ((index + 1) / filteredSentences.length) * 100,
   };
