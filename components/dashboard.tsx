@@ -74,23 +74,24 @@ export function Dashboard({ onStart, onMenu, onNavigate }: Props) {
           })
           .catch((err) => console.error("Error loading continuation state:", err));
 
-        // Load leaderboard rankings dynamically
+        // Load leaderboard rankings dynamically from view to bypass RLS safely
         supabase
-          .from("profiles")
-          .select("id, email, full_name, exp")
-          .order("exp", { ascending: false })
+          .from("leaderboard_weekly")
+          .select("user_id, display_name, exp")
+          .order("rank", { ascending: true })
           .then(({ data, error }) => {
             if (!error && data) {
               const list = data.map((item, index) => {
-                const names = item.full_name ? item.full_name.trim().split(/\s+/) : [];
+                const nameStr = item.display_name || "Learner";
+                const names = nameStr.trim().split(/\s+/);
                 const initials = names.length > 0 
                   ? (names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0])
-                  : item.email ? item.email[0].toUpperCase() : "LN";
+                  : "LN";
                 
                 return {
-                  id: item.id,
+                  id: item.user_id,
                   rank: index + 1,
-                  name: item.full_name || item.email?.split("@")[0] || "Learner",
+                  name: nameStr,
                   exp: item.exp || 0,
                   initials: initials.substring(0, 2).toUpperCase()
                 };
