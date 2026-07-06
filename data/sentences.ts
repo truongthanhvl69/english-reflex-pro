@@ -233,6 +233,63 @@ const daily: Seed[] = [
 
 const categories = ["Giao tiếp hằng ngày", "Gia đình", "Thói quen", "Ăn uống", "Du lịch", "Công sở"];
 
+const continuous: Seed[] = [
+  ["She’s taking a picture.", "Cô ấy đang chụp một bức ảnh.", ["She is taking a picture."]],
+  ["He’s tying a shoelace.", "Anh ấy đang buộc dây giày.", ["He is tying a shoelace."]],
+  ["They’re crossing the road.", "Họ đang băng qua đường.", ["They are crossing the road."]],
+  ["He’s scratching his head.", "Anh ấy đang gãi đầu.", ["He is scratching his head."]],
+  ["She’s hiding behind a tree.", "Cô ấy đang trốn sau một cái cây.", ["She is hiding behind a tree."]],
+  ["They’re waving to somebody.", "Họ đang vẫy tay chào ai đó.", ["They are waving to somebody."]],
+  ["Please don’t make so much noise. I’m trying to work.", "Làm ơn đừng làm ồn quá. Tôi đang cố gắng làm việc.", ["Please do not make so much noise. I'm trying to work."]],
+  ["What’s all that noise? What is happening?", "Tiếng ồn gì vậy? Chuyện gì đang xảy ra thế?", ["What's all that noise? What's happening?", "What is all that noise? What is happening?"]],
+  ["What’s the matter? Why are you crying?", "Có chuyện gì vậy? Sao bạn lại đang khóc?", ["What's the matter? Why are you crying?"]],
+  ["Where is Mark? He is having a shower.", "Mark ở đâu? Anh ấy đang tắm vòi sen.", ["Where's Mark? He is having a shower.", "Where is Mark? He's having a shower."]],
+  
+  ["Who are those people? What are they doing?", "Những người kia là ai? Họ đang làm gì vậy?", ["Who are those people? What are they doing?"]],
+  ["We’re not in a hurry. Why are you walking so fast?", "Chúng ta không vội mà. Sao bạn lại đang đi nhanh thế?", ["We are not in a hurry. Why are you walking so fast?"]],
+  ["Let’s go out now. It isn’t raining any more.", "Ra ngoài thôi. Trời không còn đang mưa nữa.", ["Let's go out now. It isn't raining anymore."]],
+  ["You can turn off the radio. I’m not listening to it.", "Bạn có thể tắt đài đi. Tôi đang không nghe đâu.", ["You can turn off the radio. I am not listening to it."]],
+  ["I’m looking for Sophie. Do you know where she is?", "Tôi đang tìm Sophie. Bạn có biết cô ấy ở đâu không?", ["I am looking for Sophie. Do you know where she is?"]],
+  ["The washing machine has been repaired. It is working now.", "Máy giặt đã được sửa. Giờ thì nó đang hoạt động rồi.", ["The washing machine has been repaired. It's working now."]],
+  ["Look! The bus is coming.", "Nhìn kìa! Chiếc xe buýt đang đi tới.", ["Look! The bus's coming."]],
+  ["Are you ready yet? Everybody is waiting for you.", "Bạn đã sẵn sàng chưa? Mọi người đều đang đợi bạn đấy.", ["Are you ready yet? Everybody's waiting for you."]],
+  ["Sam and Tina are in Madrid right now. They are visiting a friend of theirs.", "Sam và Tina hiện đang ở Madrid. Họ đang thăm một người bạn của họ.", ["Sam and Tina are in Madrid right now. They're visiting a friend of theirs."]],
+  ["Air consists mainly of nitrogen and oxygen. Why is he looking at us?", "Không khí chủ yếu bao gồm nitơ và oxy. Tại sao anh ta lại đang nhìn chúng ta vậy?", ["Air consists mainly of nitrogen and oxygen. Why's he looking at us?"]],
+
+  ["I don’t have anywhere to live right now. I’m staying with friends.", "Hiện tại tôi không có chỗ ở. Tôi đang ở tạm với bạn bè.", ["I do not have anywhere to live right now. I am staying with friends."]],
+  ["They don’t need their car any more. They’re trying to sell it.", "Họ không cần ô tô nữa. Họ đang cố gắng bán nó đi.", ["They do not need their car anymore. They're trying to sell it."]],
+  ["Things are not so good at work. The company is losing money.", "Công việc không tốt lắm. Công ty đang thua lỗ.", ["Things are not so good at work. The company's losing money."]],
+  ["It isn’t true what they say. They’re lying.", "Những gì họ nói không đúng đâu. Họ đang nói dối đấy.", ["It isn't true what they say. They are lying.", "It's not true what they say. They're lying."]],
+  ["Where’s your mother? Is she working today?", "Mẹ bạn đâu rồi? Hôm nay bà ấy có đang làm việc không?", ["Where is your mother? Is she working today?", "Where's your mother? Is she working today?"]],
+  ["I haven’t seen you for ages. What are you doing these days?", "Lâu lắm không gặp bạn. Dạo này bạn đang làm gì?", ["I have not seen you for ages. What are you doing these days?", "I haven't seen you for ages. What're you doing these days?"]],
+  ["Amy is a student. What is she studying?", "Amy là sinh viên. Cô ấy đang học ngành gì?", ["Amy is a student. What's she studying?"]],
+  ["I heard you started a new job. Are you enjoying it?", "Tôi nghe nói bạn mới bắt đầu công việc mới. Bạn có đang thích nó không?", ["I heard you started a new job. Are you enjoying it?"]],
+  ["Kate phoned last night. She’s having a great time.", "Kate đã gọi tối qua. Cô ấy đang có khoảng thời gian rất tuyệt.", ["Kate phoned last night. She's having a great time."]],
+  ["Andrew started evening classes recently. He’s learning Japanese.", "Andrew dạo này bắt đầu học lớp buổi tối. Anh ấy đang học tiếng Nhật.", ["Andrew started evening classes recently. He's learning Japanese."]],
+
+  ["Paul and Sarah have had an argument and now they aren’t speaking to one another.", "Paul và Sarah vừa cãi nhau và giờ họ đang không nói chuyện với nhau.", ["Paul and Sarah have had an argument and now they're not speaking to one another.", "Paul and Sarah have had an argument and now they aren't speaking to each other."]],
+  ["Tim isn’t working today. He’s taken the day off.", "Hôm nay Tim không đi làm. Anh ấy đã xin nghỉ phép.", ["Tim isn't working today. He's taken the day off."]],
+  ["They’re building a new hospital. It will be finished next year.", "Họ đang xây một bệnh viện mới. Nó sẽ được hoàn thành vào năm sau.", ["They are building a new hospital. It will be finished next year."]],
+  ["Ben is a student, but he’s not very happy. He isn’t enjoying his course.", "Ben là sinh viên nhưng cậu ấy không vui lắm. Cậu ấy đang không thích khóa học của mình.", ["Ben is a student, but he is not very happy. He isn't enjoying his course."]],
+  ["I’m reading a really good book at the moment.", "Dạo này tôi đang đọc một cuốn sách rất hay.", ["I am reading a really good book at the moment."]],
+  ["Kate wants to work in Italy, so she is learning Italian.", "Kate muốn làm việc ở Ý, nên cô ấy đang học tiếng Ý.", ["Kate wants to work in Italy, so she's learning Italian."]],
+  ["I’m living with some friends until I find a place of my own.", "Tôi đang sống cùng vài người bạn cho đến khi tìm được chỗ ở của riêng mình.", ["I am living with some friends until I find a place of my own."]],
+  ["You’re working hard today.", "Hôm nay bạn đang làm việc rất chăm chỉ.", ["You are working hard today."]],
+  ["Kate isn’t working this week. She’s on holiday.", "Tuần này Kate đang không làm việc. Cô ấy đang đi nghỉ mát.", ["Kate isn't working this week. She's on holiday."]],
+  ["I’m thinking of selling my car.", "Tôi đang suy nghĩ về việc bán chiếc xe của mình.", ["I am thinking of selling my car."]],
+
+  ["We need to leave soon. It’s getting late.", "Chúng ta cần đi sớm thôi. Trời đang dần muộn rồi.", ["We need to leave soon. It is getting late.", "We need to leave soon. It's getting late."]],
+  ["I need to eat something soon. I’m getting hungry.", "Tôi cần ăn gì đó sớm thôi. Tôi đang bắt đầu thấy đói.", ["I need to eat something soon. I am getting hungry."]],
+  ["We’re going to get wet. It’s starting to rain.", "Chúng ta sẽ bị ướt mất. Trời đang bắt đầu mưa rồi.", ["We are going to get wet. It is starting to rain."]],
+  ["The situation is already very bad and now it is getting worse.", "Tình hình vốn đã rất tệ và bây giờ nó đang trở nên tồi tệ hơn.", ["The situation is already very bad and now it's getting worse."]],
+  ["The weather is changing. Look at those clouds.", "Thời tiết đang thay đổi. Nhìn những đám mây kia kìa.", ["The weather is changing. Look at those clouds."]],
+  ["Dan has been in the same job for a long time. He’s starting to get bored.", "Dan đã làm một công việc trong thời gian rất dài. Anh ấy đang bắt đầu thấy chán.", ["Dan has been in the same job for a long time. He's starting to get bored."]],
+  ["Is your English getting better?", "Tiếng Anh của bạn có đang tiến bộ hơn không?", ["Is your English getting better?"]],
+  ["The population of the world is increasing very fast.", "Dân số thế giới đang tăng lên rất nhanh.", ["The population of the world is increasing very fast."]],
+  ["At first I didn’t like my job, but I’m starting to enjoy it now.", "Lúc đầu tôi không thích công việc của mình, nhưng giờ tôi đang bắt đầu thích nó.", ["At first I didn't like my job, but I'm starting to enjoy it now.", "At first I didn't like my job, but I am starting to enjoy it now."]],
+  ["Can we stop walking soon? I’m starting to get tired.", "Chúng ta có thể dừng đi bộ sớm không? Tôi đang bắt đầu thấy mệt rồi.", ["Can we stop walking soon? I'm starting to get tired.", "Can we stop walking soon? I am starting to get tired."]]
+];
+
 function toSentence(seed: Seed, index: number, level: "A1" | "A2"): Sentence {
   const [english, vietnamese, alternatives = [], note = "Mẫu câu giao tiếp tự nhiên"] = seed;
   return {
@@ -273,8 +330,30 @@ function toDailySentence(seed: Seed, index: number): Sentence {
   };
 }
 
+function toContinuousSentence(seed: Seed, index: number): Sentence {
+  const [english, vietnamese, alternatives = [], note = "Hiện tại tiếp diễn (Present Continuous)"] = seed;
+  const lessonNum = Math.floor(index / 10) + 1;
+  const lessonStr = `CONTINUOUS - Bài ${String(lessonNum).padStart(2, "0")}`;
+  return {
+    id: `sentence_continuous_${String(index + 1).padStart(3, "0")}`,
+    english,
+    vietnamese,
+    ipa: "",
+    level: "A1",
+    category: "Thì",
+    lesson: lessonStr,
+    partOfSpeech: "",
+    grammarNote: note,
+    alternativeAnswers: alternatives,
+    wordBank: english.replace(/[.!?]/g, "").split(/\s+/),
+    audioUrl: "",
+    tags: ["continuous", "grammar"],
+  };
+}
+
 export const sentences: Sentence[] = [
   ...a1.map((seed, index) => toSentence(seed, index, "A1")),
   ...a2.map((seed, index) => toSentence(seed, index + 50, "A2")),
   ...daily.map((seed, index) => toDailySentence(seed, index)),
+  ...continuous.map((seed, index) => toContinuousSentence(seed, index)),
 ];

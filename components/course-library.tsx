@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, ChevronDown, Clock3, LockKeyhole, Play, Search, SlidersHorizontal, Sparkles, Star } from "lucide-react";
-import { courses, lessons, dailyLessons } from "@/data/courses";
+import { courses, lessons, dailyLessons, continuousLessons } from "@/data/courses";
 import { MobileHeader } from "@/components/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserProgress, type UserProgressData } from "@/services/progressService";
@@ -33,6 +33,11 @@ export function CourseLibrary({ onStart, onMenu }: { onStart: (lessonId: string)
       const dailyProgress = userProgress.filter((p) => p.lesson_id.startsWith("daily-"));
       const completedCount = dailyProgress.reduce((sum, item) => sum + (item.completed_sentence_ids?.length || 0), 0);
       return Math.min(100, Math.round((completedCount / 120) * 100));
+    }
+    if (courseId === "continuous") {
+      const continuousProgress = userProgress.filter((p) => p.lesson_id.startsWith("continuous-"));
+      const completedCount = continuousProgress.reduce((sum, item) => sum + (item.completed_sentence_ids?.length || 0), 0);
+      return Math.min(100, Math.round((completedCount / 50) * 100));
     }
     return 0;
   };
@@ -89,6 +94,26 @@ export function CourseLibrary({ onStart, onMenu }: { onStart: (lessonId: string)
                 })
               ) : selected.id === "daily" ? (
                 dailyLessons.map((lesson) => {
+                  const dbProgress = userProgress.find((p) => p.lesson_id === lesson.id);
+                  const isCompleted = dbProgress ? (dbProgress.is_completed || (dbProgress.completed_sentence_ids?.length || 0) >= 10) : false;
+                  const progressPercent = dbProgress ? Math.min(100, (dbProgress.completed_sentence_ids?.length || 0) * 10) : 0;
+                  const lessonLocked = isPro ? false : (dbProgress ? !dbProgress.is_unlocked : lesson.locked);
+
+                  return (
+                    <button key={lesson.id} disabled={lessonLocked} onClick={() => onStart(lesson.id)} className={progressPercent > 0 && !isCompleted ? "current" : ""}>
+                      <span className={`lesson-status ${isCompleted ? "done" : lessonLocked ? "locked" : "ready"}`}>
+                        {isCompleted ? <Check size={16} /> : lessonLocked ? <LockKeyhole size={14} /> : <Play size={14} fill="currentColor" />}
+                      </span>
+                      <div>
+                        <strong>{lesson.title}: {lesson.subtitle}</strong>
+                        <span>{progressPercent > 0 ? `${progressPercent}% hoàn thành` : `10 câu · +${lesson.exp} EXP`}</span>
+                      </div>
+                      {progressPercent > 0 && <div className="lesson-mini-progress"><i style={{ width: `${progressPercent}%` }} /></div>}
+                    </button>
+                  );
+                })
+              ) : selected.id === "continuous" ? (
+                continuousLessons.map((lesson) => {
                   const dbProgress = userProgress.find((p) => p.lesson_id === lesson.id);
                   const isCompleted = dbProgress ? (dbProgress.is_completed || (dbProgress.completed_sentence_ids?.length || 0) >= 10) : false;
                   const progressPercent = dbProgress ? Math.min(100, (dbProgress.completed_sentence_ids?.length || 0) * 10) : 0;
