@@ -9,7 +9,7 @@ import {
   Volume2, X, Zap,
 } from "lucide-react";
 import { usePracticeSession } from "@/hooks/use-practice-session";
-import { playSentence, type VoiceType } from "@/services/ttsService";
+import { playSentence, unlockAudio, type VoiceType } from "@/services/ttsService";
 import { getAudioSettings, saveAudioSettings, stopAllAudio } from "@/services/audioManager";
 import { useAuth } from "@/hooks/useAuth";
 import type { PracticeMode } from "@/types";
@@ -88,6 +88,9 @@ export function PracticeStudio({
   };
 
   const play = async (customSpeed = speed) => {
+    // Synchronously unlock audio context on mobile browser tap gesture
+    unlockAudio();
+
     setAudioLoading(true); setAudioError("");
     try {
       stopAllAudio();

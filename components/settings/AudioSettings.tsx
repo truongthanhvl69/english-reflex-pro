@@ -5,8 +5,7 @@ import {
   AudioLines, Bot, Check, HelpCircle, Volume2, VolumeX, Zap,
 } from "lucide-react";
 import { MobileHeader } from "@/components/sidebar";
-import { getAudioSettings, saveAudioSettings, type AudioSettingsState, stopAllAudio } from "@/services/audioManager";
-import { playSentenceAudio } from "@/services/audioManager";
+import { getAudioSettings, saveAudioSettings, type AudioSettingsState, stopAllAudio, playSentenceAudio, unlockAudio } from "@/services/audioManager";
 import { loadUserSettings, saveUserSettings } from "@/services/settingsService";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -56,6 +55,9 @@ export function AudioSettings({ onMenu }: Props) {
   };
 
   const handleTestVoice = async () => {
+    // Synchronously unlock audio context on user gesture
+    unlockAudio();
+
     if (testPlaying) {
       stopAllAudio();
       setTestPlaying(false);

@@ -1,4 +1,8 @@
-import { playSentence as playTts, stopAudio as stopTts, type VoiceType } from "./ttsService";
+import { playSentence as playTts, stopAudio as stopTts, unlockAudio as unlockTts, type VoiceType } from "./ttsService";
+
+export function unlockAudio() {
+  unlockTts();
+}
 
 export interface AudioSettingsState {
   effectsEnabled: boolean;       // Bật/tắt hiệu ứng đúng/sai
