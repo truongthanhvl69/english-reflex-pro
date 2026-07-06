@@ -59,6 +59,9 @@ export function Dashboard({ onStart, onMenu, onNavigate }: Props) {
     status: string;
   } | null>(null);
 
+  const [topUsers, setTopUsers] = useState<any[]>([]);
+  const [myRank, setMyRank] = useState<number | null>(null);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
@@ -70,9 +73,39 @@ export function Dashboard({ onStart, onMenu, onNavigate }: Props) {
             });
           })
           .catch((err) => console.error("Error loading continuation state:", err));
+
+        // Load leaderboard rankings dynamically
+        supabase
+          .from("profiles")
+          .select("id, email, full_name, exp")
+          .order("exp", { ascending: false })
+          .then(({ data, error }) => {
+            if (!error && data) {
+              const list = data.map((item, index) => {
+                const names = item.full_name ? item.full_name.trim().split(/\s+/) : [];
+                const initials = names.length > 0 
+                  ? (names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0])
+                  : item.email ? item.email[0].toUpperCase() : "LN";
+                
+                return {
+                  id: item.id,
+                  rank: index + 1,
+                  name: item.full_name || item.email?.split("@")[0] || "Learner",
+                  exp: item.exp || 0,
+                  initials: initials.substring(0, 2).toUpperCase()
+                };
+              });
+              setTopUsers(list.slice(0, 3));
+              
+              const myPos = list.findIndex(p => p.id === user.id);
+              if (myPos !== -1) {
+                setMyRank(myPos + 1);
+              }
+            }
+          });
       }
     });
-  }, []);
+  }, [profile]);
 
   const activeCourse = continueState ? courses.find((c) => c.id === continueState.courseId) : null;
   const activeLessonDetails = continueState ? getLessonDetails(continueState.lessonId) : null;
@@ -163,7 +196,7 @@ export function Dashboard({ onStart, onMenu, onNavigate }: Props) {
           <aside className="dashboard-rail">
             <DailyGoal />
             <WeeklyActivity />
-            <MiniLeaderboard onOpen={() => onNavigate("leaderboard")} />
+            <MiniLeaderboard onOpen={() => onNavigate("leaderboard")} topUsers={topUsers} myRank={myRank} />
           </aside>
         </section>
       </div>
@@ -180,6 +213,29 @@ function WeeklyActivity() {
   return <div className="rail-card weekly-card"><div className="rail-title simple"><div><h3>Nhịp học tuần này</h3><p>4 ngày hoạt động</p></div><BarChart3 size={19} /></div><div className="week-bars">{days.map((day, i) => <div key={day.d}><div className={`bar ${i === 4 ? "today" : ""}`}><i style={{ height: `${day.v}%` }} /></div><span>{day.d}</span></div>)}</div></div>;
 }
 
-function MiniLeaderboard({ onOpen }: { onOpen: () => void }) {
-  return <div className="rail-card leaderboard-mini"><div className="rail-title simple"><div><h3>Top tuần này</h3><p>Hạng của bạn: #12</p></div><button className="icon-button tiny" onClick={onOpen}><Trophy size={17} /></button></div><div className="rank-list">{[["1", "Linh Phạm", "2,480", "LP"], ["2", "An Trần", "2,310", "AT"], ["3", "Khoa Lê", "2,190", "KL"]].map(([rank, name, score, initials]) => <div key={rank}><b>{rank}</b><span className="mini-avatar">{initials}</span><strong>{name}</strong><small>{score} XP</small></div>)}</div></div>;
+function MiniLeaderboard({ onOpen, topUsers, myRank }: { onOpen: () => void; topUsers: any[]; myRank: number | null }) {
+  return (
+    <div className="rail-card leaderboard-mini">
+      <div className="rail-title simple">
+        <div>
+          <h3>Top tuần này</h3>
+          <p>{myRank ? `Hạng của bạn: #${myRank}` : "Bạn chưa có thứ hạng"}</p>
+        </div>
+        <button className="icon-button tiny" onClick={onOpen}><Trophy size={17} /></button>
+      </div>
+      <div className="rank-list">
+        {topUsers.map((user) => (
+          <div key={user.id}>
+            <b>{user.rank}</b>
+            <span className="mini-avatar">{user.initials}</span>
+            <strong>{user.name}</strong>
+            <small>{user.exp.toLocaleString("vi-VN")} XP</small>
+          </div>
+        ))}
+        {topUsers.length === 0 && (
+          <p style={{ color: "#64748b", fontSize: "13px", textAlign: "center", padding: "10px 0" }}>Chưa có người học.</p>
+        )}
+      </div>
+    </div>
+  );
 }
