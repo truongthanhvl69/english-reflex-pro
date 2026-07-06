@@ -178,13 +178,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const signUpData = await registerWithEmail({ fullName, email, password });
       if (signUpData.session) {
         await hydrateSession(signUpData.session);
+        showToast("Đăng ký thành công!", "success");
+        return { session: signUpData.session, emailConfirmed: true };
+      } else if (signUpData.user) {
+        return { user: signUpData.user, emailConfirmed: false };
       } else {
-        const signInData = await loginWithEmail({ email, password });
-        if (signInData.session) {
-          await hydrateSession(signInData.session);
-        }
+        throw new Error("Không thể đăng ký tài khoản.");
       }
-      showToast("Đăng ký thành công!", "success");
     } catch (e: any) {
       console.error("SignUp error:", e);
       showToast(translateError(e), "error");

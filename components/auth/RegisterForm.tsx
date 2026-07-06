@@ -16,6 +16,7 @@ export function RegisterForm({ nextPath = "/" }: { nextPath?: string }) {
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   const validateEmail = (input: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,11 +50,15 @@ export function RegisterForm({ nextPath = "/" }: { nextPath?: string }) {
 
     setLoading(true);
     try {
-      await signUpWithEmail(fullName, email, password);
-      // Wait a moment before redirecting so they see the success toast
-      setTimeout(() => {
-        router.replace(nextPath);
-      }, 500);
+      const res = await signUpWithEmail(fullName, email, password);
+      if (res && !res.emailConfirmed) {
+        setRegisteredEmail(email);
+      } else {
+        // Wait a moment before redirecting so they see the success toast
+        setTimeout(() => {
+          router.replace(nextPath);
+        }, 500);
+      }
     } catch (e: any) {
       console.error(e);
       const rawMsg = e.message || "";
@@ -66,6 +71,43 @@ export function RegisterForm({ nextPath = "/" }: { nextPath?: string }) {
       setLoading(false);
     }
   };
+
+  if (registeredEmail) {
+    return (
+      <div className="login-card">
+        <div className="login-card-icon" style={{ color: "var(--green)", background: "#eafaf5" }}>
+          <UserPlus size={30} />
+        </div>
+        <span className="eyebrow" style={{ color: "var(--green)" }}>BẮT ĐẦU NGAY</span>
+        
+        <div style={{ padding: "10px 0", textAlign: "center" }}>
+          <h2 style={{ fontSize: "22px", marginBottom: "16px" }}>🎉 Đăng ký thành công!</h2>
+          <p style={{ color: "#475569", lineHeight: "1.6", marginBottom: "20px" }}>
+            Chúng tôi đã gửi một email xác nhận đến:
+          </p>
+          <div style={{ 
+            background: "#f1f5f9", 
+            padding: "12px 18px", 
+            borderRadius: "10px", 
+            fontWeight: "700", 
+            color: "#1e293b",
+            fontSize: "15px",
+            marginBottom: "24px",
+            wordBreak: "break-all"
+          }}>
+            {registeredEmail}
+          </div>
+          <p style={{ color: "#475569", lineHeight: "1.6", marginBottom: "28px" }}>
+            Vui lòng mở Gmail, bấm vào liên kết xác nhận tài khoản, sau đó quay lại đăng nhập.
+          </p>
+        </div>
+
+        <button onClick={() => router.push("/login")} className="auth-submit-button" style={{ background: "linear-gradient(135deg, #20b486, #189870)", color: "#fff", display: "flex", justifyContent: "center", alignItems: "center" }}>
+          Quay lại Đăng nhập
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="login-card">
@@ -90,7 +132,7 @@ export function RegisterForm({ nextPath = "/" }: { nextPath?: string }) {
             id="fullName"
             type="text"
             className="auth-input"
-            placeholder="Nguyen Van A"
+            placeholder="Gia Bảo Hồ"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             disabled={loading}
@@ -103,7 +145,7 @@ export function RegisterForm({ nextPath = "/" }: { nextPath?: string }) {
             id="email"
             type="email"
             className="auth-input"
-            placeholder="example@gmail.com"
+            placeholder="giabaoho6973@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}

@@ -14,7 +14,7 @@ export interface AuthContextValue {
   signInWithMock?: () => Promise<void>;
   signOut: () => Promise<void>;
   logout: () => Promise<void>;
-  signUpWithEmail: (fullName: string, email: string, password: string) => Promise<void>;
+  signUpWithEmail: (fullName: string, email: string, password: string) => Promise<any>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   refreshProfile: () => Promise<void>;
   showToast: (message: string, kind?: ToastKind) => void;
