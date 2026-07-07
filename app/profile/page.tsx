@@ -15,6 +15,7 @@ import { SecurityService } from "@/services/securityService";
 import { AvatarService } from "@/services/avatarService";
 import { MembershipService } from "@/services/membershipService";
 import { PaymentHistoryService } from "@/services/paymentHistoryService";
+import { UserAvatar } from "@/components/common/UserAvatar";
 
 type ProfileTab = "overview" | "account" | "security" | "achievements" | "billing" | "settings";
 
@@ -367,17 +368,7 @@ function ProfileContent() {
             {/* Account Info Panel */}
             <div className="profile-card-panel" style={{ display: "flex", gap: "24px", alignItems: "center", flexWrap: "wrap" }}>
               <div style={{ position: "relative" }}>
-                {profile?.avatar_url ? (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt="Avatar" 
-                    style={{ width: "96px", height: "96px", borderRadius: "50%", objectFit: "cover", border: "3px solid #20b486" }} 
-                  />
-                ) : (
-                  <div style={{ width: "96px", height: "96px", borderRadius: "50%", background: "#20b486", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "36px", fontWeight: "bold" }}>
-                    {initials}
-                  </div>
-                )}
+                <UserAvatar avatarUrl={profile?.avatar_url} fullName={name} email={profile?.email} size={96} />
                 <span style={{ position: "absolute", bottom: 0, right: 0, background: "#20b486", color: "white", padding: "4px 8px", borderRadius: "12px", fontSize: "10px", fontWeight: "bold", textTransform: "uppercase" }}>
                   {tier}
                 </span>
@@ -454,17 +445,7 @@ function ProfileContent() {
             <div className="profile-card-panel">
               <h2>Ảnh đại diện</h2>
               <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
-                {profile?.avatar_url ? (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt="Avatar" 
-                    style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover" }} 
-                  />
-                ) : (
-                  <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: "#20b486", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", fontWeight: "bold" }}>
-                    {initials}
-                  </div>
-                )}
+                <UserAvatar avatarUrl={profile?.avatar_url} fullName={name} email={profile?.email} size={80} />
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <label className="button button-secondary" style={{ cursor: "pointer", display: "inline-flex", gap: "8px", alignItems: "center" }}>
                     <Upload size={15} /> Tải ảnh mới

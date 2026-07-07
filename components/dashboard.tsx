@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import type { AppView, PracticeMode } from "@/types";
 import { MobileHeader } from "@/components/sidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { UserAvatar } from "@/components/common/UserAvatar";
 import { supabase } from "@/lib/supabaseClient";
 import { getContinueLearningState } from "@/services/learningStateService";
 import { courses, lessons, dailyLessons, continuousLessons } from "@/data/courses";
@@ -77,23 +78,18 @@ export function Dashboard({ onStart, onMenu, onNavigate }: Props) {
         // Load leaderboard rankings dynamically from view to bypass RLS safely
         supabase
           .from("leaderboard_weekly")
-          .select("user_id, display_name, exp")
+          .select("user_id, display_name, avatar, exp")
           .order("rank", { ascending: true })
           .then(({ data, error }) => {
             if (!error && data) {
               const list = data.map((item, index) => {
                 const nameStr = item.display_name || "Learner";
-                const names = nameStr.trim().split(/\s+/);
-                const initials = names.length > 0 
-                  ? (names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0])
-                  : "LN";
-                
                 return {
                   id: item.user_id,
                   rank: index + 1,
                   name: nameStr,
                   exp: item.exp || 0,
-                  initials: initials.substring(0, 2).toUpperCase()
+                  avatar: item.avatar
                 };
               });
               setTopUsers(list.slice(0, 3));
@@ -228,7 +224,7 @@ function MiniLeaderboard({ onOpen, topUsers, myRank }: { onOpen: () => void; top
         {topUsers.map((user) => (
           <div key={user.id}>
             <b>{user.rank}</b>
-            <span className="mini-avatar">{user.initials}</span>
+            <UserAvatar avatarUrl={user.avatar} fullName={user.name} size={30} />
             <strong>{user.name}</strong>
             <small>{user.exp.toLocaleString("vi-VN")} XP</small>
           </div>

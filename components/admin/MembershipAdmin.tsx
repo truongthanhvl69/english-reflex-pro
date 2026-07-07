@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useTransition } from "react";
 import { Search, Crown, Star, RefreshCw, Calendar, ShieldAlert, Sparkles, User, BadgeAlert } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { UserAvatar } from "@/components/common/UserAvatar";
 
 export default function MembershipAdmin() {
   const { showToast } = useAuth();
@@ -157,17 +158,7 @@ export default function MembershipAdmin() {
               return (
                 <div key={m.id} className="admin-row" style={{ gridTemplateColumns: "1.5fr 1fr 1fr 1.2fr 1.5fr", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    {profile.avatar_url ? (
-                      <img
-                        src={profile.avatar_url}
-                        alt=""
-                        style={{ width: "28px", height: "28px", borderRadius: "50%" }}
-                      />
-                    ) : (
-                      <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#eef1f6", display: "grid", placeItems: "center", fontSize: "11px", fontWeight: "bold" }}>
-                        {(profile.full_name || "L").slice(0, 1).toUpperCase()}
-                      </div>
-                    )}
+                    <UserAvatar avatarUrl={profile.avatar_url} fullName={profile.full_name} email={profile.email} size={28} />
                     <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                       <strong style={{ fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis" }}>{profile.full_name || "Chưa thiết lập"}</strong>
                       <small style={{ fontSize: "10px", color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis" }}>{profile.email || "Không có email"}</small>

@@ -7,6 +7,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/hooks/useAuth";
 import { LeaderboardService, type LeaderboardEntry } from "@/services/leaderboardService";
 
+import { UserAvatar } from "@/components/common/UserAvatar";
+
 type TabType = "today" | "weekly" | "monthly" | "total";
 
 const tabLabels: { id: TabType; label: string }[] = [
@@ -122,9 +124,7 @@ export function LeaderboardView({ onMenu }: { onMenu: () => void }) {
               <div className="podium-glow" />
               {second && (
                 <div className={`podium-person second ${profile?.id === second.user_id ? "me" : ""}`}>
-                  <span className="podium-avatar">
-                    {second.avatar || getInitials(second.display_name).substring(0, 2).toUpperCase()}
-                  </span>
+                  <UserAvatar avatarUrl={second.avatar} fullName={second.display_name} size={64} />
                   <i>2</i>
                   <strong>{second.display_name}</strong>
                   <small>{second.exp.toLocaleString("vi-VN")} EXP</small>
@@ -134,9 +134,7 @@ export function LeaderboardView({ onMenu }: { onMenu: () => void }) {
               {first && (
                 <div className={`podium-person first ${profile?.id === first.user_id ? "me" : ""}`}>
                   <Crown size={28} fill="currentColor" />
-                  <span className="podium-avatar">
-                    {first.avatar || getInitials(first.display_name).substring(0, 2).toUpperCase()}
-                  </span>
+                  <UserAvatar avatarUrl={first.avatar} fullName={first.display_name} size={80} />
                   <i>1</i>
                   <strong>{first.display_name}</strong>
                   <small>{first.exp.toLocaleString("vi-VN")} EXP</small>
@@ -145,9 +143,7 @@ export function LeaderboardView({ onMenu }: { onMenu: () => void }) {
               )}
               {third && (
                 <div className={`podium-person third ${profile?.id === third.user_id ? "me" : ""}`}>
-                  <span className="podium-avatar">
-                    {third.avatar || getInitials(third.display_name).substring(0, 2).toUpperCase()}
-                  </span>
+                  <UserAvatar avatarUrl={third.avatar} fullName={third.display_name} size={64} />
                   <i>3</i>
                   <strong>{third.display_name}</strong>
                   <small>{third.exp.toLocaleString("vi-VN")} EXP</small>
@@ -180,7 +176,7 @@ export function LeaderboardView({ onMenu }: { onMenu: () => void }) {
                       >
                         <b>#{person.rank}</b>
                         <div className="rank-person">
-                          <span>{person.avatar || getInitials(person.display_name).substring(0, 2).toUpperCase()}</span>
+                          <UserAvatar avatarUrl={person.avatar} fullName={person.display_name} size={40} />
                           <div>
                             <strong>{person.display_name} {isMe && <i>✔ Bạn</i>}</strong>
                             <small>Level {person.level}</small>

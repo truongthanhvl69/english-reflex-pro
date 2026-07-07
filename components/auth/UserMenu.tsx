@@ -5,6 +5,8 @@ import { ChevronDown, Flame, LogOut, Star, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
+import { UserAvatar } from "@/components/common/UserAvatar";
+
 function initials(name: string) {
   return name.split(" ").filter(Boolean).slice(-2).map((part) => part[0]).join("").toUpperCase();
 }
@@ -55,12 +57,8 @@ export function UserMenu() {
         </button>
       )}
       <div className="user-menu" ref={root} style={{ width: "100%" }}>
-        <button className="user-menu-trigger" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
-          {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt="" referrerPolicy="no-referrer" />
-          ) : (
-            <span className="avatar-fallback">{initials(name)}</span>
-          )}
+        <button className="user-menu-trigger" onClick={() => setOpen((value) => !value)} aria-expanded={open} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <UserAvatar avatarUrl={profile?.avatar_url} fullName={name} email={email} size={32} />
           <span className="user-menu-copy">
             <strong>{name}</strong>
             <small>Level {profile?.level ?? 1} · <span style={{ fontWeight: 800, color: currentTier === "pro" ? "#e9a116" : currentTier === "premium" ? "#8768f8" : "#8993a5" }}>{badge}</span></small>
