@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/services/paymentService";
+import { PaymentService, supabaseAdmin } from "@/services/paymentService";
 
 export async function GET(request: Request) {
   try {
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
     if (mErr) throw mErr;
 
-    // 2. Fetch payment history
+    // 2. Fetch payment history logs
     const { data: payments, error: pErr } = await supabaseAdmin
       .from("payment_history")
       .select(`
@@ -48,7 +48,35 @@ export async function GET(request: Request) {
 
     if (pErr) throw pErr;
 
-    // 3. Compute stats
+    // 3. Fetch payment orders
+    const { data: orders, error: oErr } = await supabaseAdmin
+      .from("payment_orders")
+      .select(`
+        id,
+        user_id,
+        plan_id,
+        amount,
+        currency,
+        provider,
+        status,
+        order_code,
+        transfer_content,
+        created_at,
+        paid_at,
+        profiles:user_id (
+          full_name,
+          email,
+          avatar_url
+        )
+      `)
+      .order("created_at", { ascending: false });
+
+    if (oErr) throw oErr;
+
+    // 4. Fetch payment settings
+    const settings = await PaymentService.getPaymentSettings();
+
+    // 5. Compute stats
     const totalMembers = members?.length || 0;
     const proMembers = members?.filter((m) => m.plan === "pro" && m.status === "active").length || 0;
     const premiumMembers = members?.filter((m) => m.plan === "premium" && m.status === "active").length || 0;
@@ -62,43 +90,88 @@ export async function GET(request: Request) {
     ) || [];
     
     const monthlyRevenue = recentSuccessPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const pendingOrdersCount = orders?.filter((o) => o.status === "pending_verification").length || 0;
 
     return NextResponse.json({
       members: members || [],
       payments: payments || [],
+      orders: orders || [],
+      settings: settings || {},
       stats: {
         totalMembers,
         proMembers,
         premiumMembers,
         freeMembers,
         monthlyRevenue,
+        pendingOrdersCount
       },
     });
   } catch (error: any) {
-    console.error("Admin Membership GET Error:", error);
+    console.error("Admin GET Error:", error);
     return NextResponse.json({ error: error.message || "Failed to load admin data" }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const { userId, action, plan, durationMonths } = await request.json();
+    const { userId, action, plan, durationMonths, orderId, settings } = await request.json();
 
-    if (!userId || !action) {
-      return NextResponse.json({ error: "Thiếu thông tin yêu cầu" }, { status: 400 });
+    if (!action) {
+      return NextResponse.json({ error: "Thiếu hành động (action)" }, { status: 400 });
     }
 
-    if (action === "update_tier") {
-      if (!plan) return NextResponse.json({ error: "Thiếu gói cần cập nhật" }, { status: 400 });
+    // A. Approve manual bank transfer order
+    if (action === "approve_order") {
+      if (!orderId) return NextResponse.json({ error: "Thiếu mã đơn hàng" }, { status: 400 });
+      const transactionId = `bank_approved_${Date.now()}`;
+      await PaymentService.completeOrder(orderId, transactionId);
+      return NextResponse.json({ success: true });
+    }
 
+    // B. Decline manual bank transfer order
+    if (action === "decline_order") {
+      if (!orderId) return NextResponse.json({ error: "Thiếu mã đơn hàng" }, { status: 400 });
+      const { error } = await supabaseAdmin
+        .from("payment_orders")
+        .update({ status: "failed", updated_at: new Date().toISOString() })
+        .eq("id", orderId);
+      if (error) throw error;
+      return NextResponse.json({ success: true });
+    }
+
+    // C. Cancel order
+    if (action === "cancel_order") {
+      if (!orderId) return NextResponse.json({ error: "Thiếu mã đơn hàng" }, { status: 400 });
+      const { error } = await supabaseAdmin
+        .from("payment_orders")
+        .update({ status: "canceled", updated_at: new Date().toISOString() })
+        .eq("id", orderId);
+      if (error) throw error;
+      return NextResponse.json({ success: true });
+    }
+
+    // D. Update payment settings
+    if (action === "save_settings") {
+      if (!settings || typeof settings !== "object") {
+        return NextResponse.json({ error: "Thiếu cấu hình lưu" }, { status: 400 });
+      }
+
+      for (const [key, val] of Object.entries(settings)) {
+        await PaymentService.updatePaymentSetting(key, val);
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    // E. Force update/upgrade membership (legacy)
+    if (action === "update_tier") {
+      if (!userId || !plan) return NextResponse.json({ error: "Thiếu tham số" }, { status: 400 });
       let expiredAt: string | null = null;
       if (plan !== "free") {
         const date = new Date();
-        date.setMonth(date.setMonth(date.getMonth() + (durationMonths || 1)));
+        date.setMonth(date.getMonth() + (durationMonths || 1));
         expiredAt = date.toISOString();
       }
 
-      // Upsert membership
       const { data: membership, error: err } = await supabaseAdmin
         .from("memberships")
         .upsert({
@@ -115,7 +188,15 @@ export async function POST(request: Request) {
 
       if (err) throw err;
 
-      // Log action
+      // Trigger tier update in profiles table directly
+      await supabaseAdmin
+        .from("profiles")
+        .update({ 
+          membership_type: plan,
+          subscription_tier: plan === "lifetime" ? "pro" : plan
+        })
+        .eq("id", userId);
+
       await supabaseAdmin.from("subscription_logs").insert({
         user_id: userId,
         action: `admin_force_${plan}`,
@@ -125,8 +206,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, membership });
     }
 
+    // F. Extend membership (legacy)
     if (action === "extend") {
-      // Find current membership
+      if (!userId) return NextResponse.json({ error: "Thiếu user ID" }, { status: 400 });
       const { data: mem } = await supabaseAdmin
         .from("memberships")
         .select("*")
@@ -135,7 +217,6 @@ export async function POST(request: Request) {
 
       const baseDate = mem?.expired_at ? new Date(mem.expired_at) : new Date();
       if (baseDate < new Date()) {
-        // If already expired, start from today
         baseDate.setTime(Date.now());
       }
       baseDate.setMonth(baseDate.getMonth() + (durationMonths || 1));
@@ -163,7 +244,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: "Hành động không hợp lệ" }, { status: 400 });
   } catch (error: any) {
-    console.error("Admin Membership POST Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to update membership" }, { status: 500 });
+    console.error("Admin POST Error:", error);
+    return NextResponse.json({ error: error.message || "Failed to execute admin action" }, { status: 500 });
   }
 }

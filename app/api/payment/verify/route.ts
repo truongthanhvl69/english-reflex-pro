@@ -1,22 +1,30 @@
 import { NextResponse } from "next/server";
-import { PaymentService } from "@/services/paymentService";
+import { supabaseAdmin } from "@/services/paymentService";
 
 export async function POST(request: Request) {
   try {
-    const { userId, sessionId } = await request.json();
+    const { orderId } = await request.json();
 
-    if (!userId || !sessionId) {
-      return NextResponse.json({ error: "Thiếu thông tin xác thực giao dịch" }, { status: 400 });
+    if (!orderId) {
+      return NextResponse.json({ error: "Thiếu mã đơn hàng" }, { status: 400 });
     }
 
-    const { success } = await PaymentService.verifyPayment(userId, sessionId);
-    if (success) {
-      return NextResponse.json({ success: true, message: "Giao dịch đã được xác minh thành công" });
-    } else {
-      return NextResponse.json({ success: false, error: "Giao dịch không thành công hoặc chưa được thanh toán" });
+    const { data: order, error } = await supabaseAdmin
+      .from("payment_orders")
+      .select("*")
+      .eq("id", orderId)
+      .maybeSingle();
+
+    if (error || !order) {
+      return NextResponse.json({ error: "Không tìm thấy đơn hàng" }, { status: 404 });
     }
+
+    return NextResponse.json({
+      status: order.status,
+      paidAt: order.paid_at
+    });
   } catch (error: any) {
     console.error("Verify API Error:", error);
-    return NextResponse.json({ error: error.message || "Lỗi máy chủ khi xác minh giao dịch" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Lỗi máy chủ khi kiểm tra đơn hàng" }, { status: 500 });
   }
 }
