@@ -7,7 +7,10 @@ export function useSubscription() {
   const { user, showToast, refreshProfile } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const startCheckout = useCallback(async (planId: "pro" | "premium", provider: "stripe" | "mock") => {
+  const startCheckout = useCallback(async (
+    planId: "pro_monthly" | "pro_yearly" | "basic_monthly" | "lifetime", 
+    provider: "stripe" | "mock" | "bank_transfer"
+  ) => {
     if (!user?.id) {
       showToast("Vui lòng đăng nhập để nâng cấp tài khoản.", "error");
       return;

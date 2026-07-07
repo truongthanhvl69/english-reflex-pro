@@ -300,7 +300,7 @@ function ProfileContent() {
   };
 
   const name = profile?.full_name || user?.user_metadata.name || "Learner";
-  const tier = membership?.plan || "free";
+  const tier = membership?.membership_type || "free";
   const initials = getInitials(name).substring(0, 2).toUpperCase();
 
   return (
@@ -732,7 +732,7 @@ function ProfileContent() {
                 <div style={{ padding: "14px", border: "1px solid #e2e8f0", borderRadius: "12px", background: "#f8fafc" }}>
                   <span style={{ fontSize: "11px", color: "#64748b", display: "block" }}>Ngày đăng ký</span>
                   <strong style={{ fontSize: "14px", color: "#0f172a" }}>
-                    {membership?.start_date ? new Date(membership.start_date).toLocaleDateString("vi-VN") : "N/A"}
+                    {membership?.started_at ? new Date(membership.started_at).toLocaleDateString("vi-VN") : "N/A"}
                   </strong>
                 </div>
                 <div style={{ padding: "14px", border: "1px solid #e2e8f0", borderRadius: "12px", background: "#f8fafc" }}>
@@ -760,7 +760,7 @@ function ProfileContent() {
                         onClick={async () => {
                           setLoading(true);
                           try {
-                            await MembershipService.cancelAutoRenewal(user?.id || "");
+                            await MembershipService.cancelSubscription(user?.id || "");
                             showToast("Đã hủy tự động gia hạn thành công.", "success");
                             const m = await MembershipService.getMembership(user?.id || "");
                             setMembership(m);
@@ -804,7 +804,7 @@ function ProfileContent() {
                           <td style={{ padding: "12px 8px", fontWeight: "bold" }}>
                             {Number(p.amount).toLocaleString("vi-VN")} {p.currency}
                           </td>
-                          <td style={{ padding: "12px 8px", textTransform: "uppercase" }}>{tier === "free" ? "Pro" : tier}</td>
+                          <td style={{ padding: "12px 8px", textTransform: "uppercase" }}>{p.plan_id ? p.plan_id.toUpperCase().replace("_", " ") : "N/A"}</td>
                           <td style={{ padding: "12px 8px", textTransform: "capitalize" }}>{p.provider}</td>
                           <td style={{ padding: "12px 8px" }}>
                             <code style={{ fontSize: "11px", background: "#f1f5f9", padding: "2px 6px", borderRadius: "4px" }}>

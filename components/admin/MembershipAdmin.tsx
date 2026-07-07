@@ -33,7 +33,7 @@ export default function MembershipAdmin() {
     void fetchData();
   }, []);
 
-  const handleUpdateTier = async (userId: string, plan: "free" | "pro" | "premium", durationMonths = 1) => {
+  const handleUpdateTier = async (userId: string, plan: "free" | "basic" | "pro" | "premium" | "lifetime", durationMonths = 1) => {
     try {
       const res = await fetch("/api/admin/membership", {
         method: "POST",
@@ -77,7 +77,7 @@ export default function MembershipAdmin() {
     const profile = m.profiles || {};
     const name = profile.full_name || "";
     const email = profile.email || "";
-    const text = `${name} ${email} ${m.plan}`.toLowerCase();
+    const text = `${name} ${email} ${m.membership_type}`.toLowerCase();
     return text.includes(query.toLowerCase());
   });
 
@@ -172,10 +172,10 @@ export default function MembershipAdmin() {
                       fontSize: "10px",
                       fontWeight: "bold",
                       textTransform: "uppercase",
-                      background: m.plan === "free" ? "#f1f5f9" : m.plan === "pro" ? "#fff6e5" : "#f2efff",
-                      color: m.plan === "free" ? "#64748b" : m.plan === "pro" ? "#e9a116" : "#8768f8"
+                      background: m.membership_type === "free" ? "#f1f5f9" : m.membership_type === "basic" ? "#e6f7ff" : m.membership_type === "pro" ? "#fff6e5" : "#f2efff",
+                      color: m.membership_type === "free" ? "#64748b" : m.membership_type === "basic" ? "#1890ff" : m.membership_type === "pro" ? "#e9a116" : "#8768f8"
                     }}>
-                      {m.plan}
+                      {m.membership_type}
                     </span>
                   </div>
 
@@ -196,7 +196,7 @@ export default function MembershipAdmin() {
                   </div>
 
                   <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
-                    {m.plan === "free" ? (
+                    {m.membership_type === "free" ? (
                       <button
                         className="button button-secondary"
                         style={{ padding: "4px 8px", fontSize: "10px" }}

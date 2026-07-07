@@ -1,4 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
+import { StripeService } from "./stripeService";
+import { BankTransferService } from "./bankTransferService";
+import { MembershipService } from "./membershipService";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
@@ -10,189 +13,53 @@ export const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
 export interface MembershipData {
   id?: string;
   user_id: string;
-  plan: "free" | "basic" | "pro" | "premium" | "lifetime";
-  status: "active" | "expired" | "canceled" | "none";
-  start_date?: string;
+  membership_type: "free" | "basic" | "pro" | "premium" | "lifetime";
+  status: "active" | "expired" | "cancelled" | "none";
+  started_at?: string;
   expired_at?: string | null;
   provider?: string | null;
   subscription_id?: string | null;
+  auto_renew?: boolean;
 }
 
 export interface PaymentOrder {
   id: string;
   user_id: string;
   plan_id: string;
+  plan_code: string;
   amount: number;
   currency: string;
-  provider: "bank_transfer" | "stripe" | "momo" | "vnpay" | "zalopay";
-  status: "pending" | "pending_verification" | "paid" | "failed" | "expired" | "canceled" | "refunded";
+  provider: "bank_transfer" | "stripe" | "momo" | "vnpay" | "zalopay" | "mock";
+  status: "pending" | "pending_verification" | "paid" | "failed" | "expired" | "cancelled" | "refunded";
   order_code: string;
   transfer_content: string;
   checkout_url: string | null;
   qr_url: string | null;
   expires_at: string;
   paid_at: string | null;
+  metadata?: any;
   created_at: string;
   updated_at: string;
 }
 
-export interface PaymentProvider {
-  createOrder(
-    userId: string,
-    planId: string,
-    amount: number,
-    orderCode: string,
-    transferContent: string,
-    expiryMinutes: number
-  ): Promise<{ checkoutUrl: string | null; qrUrl: string | null; expiresAt: string }>;
-  verifyPayment(orderId: string): Promise<boolean>;
-  refund(orderId: string): Promise<boolean>;
-}
-
-// 1. Stripe Payment Provider Implementation
-export const StripePaymentProviderImpl: PaymentProvider = {
-  async createOrder(userId, planId, amount, orderCode, transferContent, expiryMinutes) {
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeSecretKey) {
-      throw new Error("Stripe secret key is not configured.");
-    }
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-    const isLifetime = planId === "lifetime";
-    const isYearly = planId.endsWith("yearly");
-
-    const lineItems = {
-      "line_items[0][price_data][currency]": "vnd",
-      "line_items[0][price_data][product_data][name]": `English Reflex ${planId.toUpperCase().replace("_", " ")}`,
-      "line_items[0][price_data][unit_amount]": String(amount),
-      "line_items[0][quantity]": "1",
-    };
-
-    const params = new URLSearchParams({
-      ...lineItems,
-      "success_url": `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&userId=${userId}&plan=${planId}&orderCode=${orderCode}`,
-      "cancel_url": `${siteUrl}/pricing`,
-      "client_reference_id": userId,
-      "metadata[orderCode]": orderCode,
-      "metadata[userId]": userId,
-      "metadata[plan]": planId,
-    });
-
-    if (isLifetime) {
-      params.append("mode", "payment");
-    } else {
-      params.append("mode", "subscription");
-      params.append("line_items[0][price_data][recurring][interval]", isYearly ? "year" : "month");
-    }
-
-    const res = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${stripeSecretKey}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: params.toString(),
-    });
-
-    if (!res.ok) {
-      const errData = await res.json();
-      throw new Error(`Stripe Checkout Session error: ${errData.error?.message || res.statusText}`);
-    }
-
-    const session = await res.json();
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + expiryMinutes);
-
-    return {
-      checkoutUrl: session.url,
-      qrUrl: null,
-      expiresAt: expiresAt.toISOString(),
-    };
-  },
-
-  async verifyPayment(orderId) {
-    const { data: order } = await supabaseAdmin
-      .from("payment_orders")
-      .select("*")
-      .eq("id", orderId)
-      .maybeSingle();
-
-    if (!order || !order.checkout_url) return false;
-
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeSecretKey) return false;
-
-    // Find session id from checkout URL
-    const sessionId = order.checkout_url.split("/").pop() || "";
-    try {
-      const res = await fetch(`https://api.stripe.com/v1/checkout/sessions/${sessionId}`, {
-        headers: { Authorization: `Bearer ${stripeSecretKey}` },
-      });
-
-      if (!res.ok) return false;
-      const session = await res.json();
-
-      if (session.payment_status === "paid") {
-        await PaymentService.completeOrder(orderId, session.id || order.order_code);
-        return true;
-      }
-    } catch (e) {
-      console.error("Error verifying Stripe session:", e);
-    }
-    return false;
-  },
-
-  async refund(orderId) {
-    return false; // Implement refund logic via Stripe refunds API if needed
-  }
-};
-
-// 2. Bank Transfer Payment Provider Implementation
-export const BankTransferPaymentProviderImpl: PaymentProvider = {
-  async createOrder(userId, planId, amount, orderCode, transferContent, expiryMinutes) {
-    // Read bank configurations from payment_settings
-    const { data: settingsRow } = await supabaseAdmin
-      .from("payment_settings")
-      .select("value")
-      .eq("key", "bank_transfer")
-      .maybeSingle();
-
-    const config = settingsRow?.value || {
-      bank_name: "Techcombank",
-      account_no: "19036789999018",
-      account_name: "TRAN VAN TRUONG"
-    };
-
-    // Construct standard VietQR code URL
-    const bankId = config.bank_name.toLowerCase().replace(/\s+/g, "");
-    const accountNo = config.account_no;
-    const accountName = encodeURIComponent(config.account_name);
-    const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(transferContent)}&accountName=${accountName}`;
-
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + expiryMinutes);
-
-    return {
-      checkoutUrl: null,
-      qrUrl,
-      expiresAt: expiresAt.toISOString()
-    };
-  },
-
-  async verifyPayment(orderId) {
-    // Bank transfers are verified manually by admin or via webhook integration
-    return false;
-  },
-
-  async refund(orderId) {
-    return false;
-  }
-};
-
-/**
- * CORE PAYMENT SERVICE
- */
 export const PaymentService = {
+  // Check tables at startup to prevent app crashes and log warnings clearly
+  async autoCheckDatabase() {
+    const tables = ["plans", "payment_orders", "payment_history", "memberships", "payment_settings"];
+    for (const t of tables) {
+      try {
+        const { error } = await supabaseAdmin.from(t).select("*").limit(1);
+        if (error && error.code !== "PGRST116") {
+          console.warn(`[WARNING] Table check failed for "${t}":`, error.message);
+        } else {
+          console.log(`[DATABASE] Table "${t}" exists and is accessible.`);
+        }
+      } catch (e: any) {
+        console.warn(`[WARNING] Exception checking table "${t}":`, e.message || e);
+      }
+    }
+  },
+
   async getPaymentSettings() {
     const { data } = await supabaseAdmin.from("payment_settings").select("*");
     const settings: Record<string, any> = {};
@@ -204,11 +71,12 @@ export const PaymentService = {
     return settings;
   },
 
-  async updatePaymentSetting(key: string, value: any) {
-    const { error } = await supabaseAdmin
-      .from("payment_settings")
-      .upsert({ key, value, updated_at: new Date().toISOString() });
-    if (error) throw error;
+  async getOrderById(orderId: string) {
+    return supabaseAdmin
+      .from("payment_orders")
+      .select("*")
+      .eq("id", orderId)
+      .maybeSingle();
   },
 
   async createCheckout(
@@ -234,45 +102,43 @@ export const PaymentService = {
     const currency = general.currency || "VND";
     const expiryMinutes = general.order_expiry_minutes || 15;
 
+    // plan code
+    const planCode = planId.includes("pro") ? "PRO" : planId.includes("basic") ? "BASIC" : "LIFETIME";
+
     // 2. Generate unique order code & transfer content
     const orderCode = "ORD" + Math.random().toString(36).substring(2, 10).toUpperCase();
     const userIdShort = userId.substring(0, 3).toUpperCase();
     const orderIdShort = orderCode.slice(-4);
     const transferContent = `EFR-${userIdShort}-${orderIdShort}`;
 
-    // 3. Delegate order details creation to matching provider
     let checkoutUrl = null;
     let qrUrl = null;
     let expiresAt = "";
 
-    // If sandbox mock provider is passed (only in dev/test)
+    const expires = new Date();
+    expires.setMinutes(expires.getMinutes() + expiryMinutes);
+    expiresAt = expires.toISOString();
+
     if (provider === "mock") {
-      const expires = new Date();
-      expires.setMinutes(expires.getMinutes() + expiryMinutes);
-      expiresAt = expires.toISOString();
       checkoutUrl = `/checkout/mock?userId=${userId}&plan=${planId}&orderCode=${orderCode}`;
     } else if (provider === "stripe") {
-      const result = await StripePaymentProviderImpl.createOrder(
-        userId, planId, amount, orderCode, transferContent, expiryMinutes
+      const stripeRes = await StripeService.createCheckoutSession(
+        userId, planId, amount, orderCode, expiryMinutes
       );
-      checkoutUrl = result.checkoutUrl;
-      expiresAt = result.expiresAt;
+      checkoutUrl = stripeRes.checkoutUrl;
+      expiresAt = stripeRes.expiresAt;
     } else if (provider === "bank_transfer") {
-      const result = await BankTransferPaymentProviderImpl.createOrder(
-        userId, planId, amount, orderCode, transferContent, expiryMinutes
-      );
-      qrUrl = result.qrUrl;
-      expiresAt = result.expiresAt;
+      qrUrl = await BankTransferService.generateOrderQR(amount, transferContent);
     } else {
       throw new Error(`Unsupported payment provider: ${provider}`);
     }
 
-    // 4. Save order to payment_orders table
     const { data: order, error: orderErr } = await supabaseAdmin
       .from("payment_orders")
       .insert({
         user_id: userId,
         plan_id: planId,
+        plan_code: planCode,
         amount,
         currency,
         provider,
@@ -282,6 +148,7 @@ export const PaymentService = {
         checkout_url: checkoutUrl,
         qr_url: qrUrl,
         expires_at: expiresAt,
+        metadata: { planId, provider }
       })
       .select("*")
       .single();
@@ -290,74 +157,25 @@ export const PaymentService = {
     return order as PaymentOrder;
   },
 
-  async getMembership(userId: string): Promise<MembershipData | null> {
-    if (!userId) return null;
-    const { data } = await supabaseAdmin
-      .from("memberships")
-      .select("*")
-      .eq("user_id", userId)
-      .maybeSingle();
-    return data as MembershipData;
-  },
+  async verifyPayment(orderId: string): Promise<boolean> {
+    const { data: order } = await this.getOrderById(orderId);
+    if (!order) return false;
+    if (order.status === "paid") return true;
 
-  async upgradeMembership(
-    userId: string,
-    plan: "basic" | "pro" | "premium" | "lifetime",
-    durationMonths: number,
-    provider: string,
-    subscriptionId?: string
-  ): Promise<MembershipData> {
-    const startDate = new Date();
-    let expiredAt: Date | null = new Date();
+    if (order.provider === "stripe") {
+      return StripeService.verifyCheckoutSession(orderId);
+    }
     
-    if (plan === "lifetime") {
-      expiredAt = null;
-    } else {
-      expiredAt.setMonth(expiredAt.getMonth() + durationMonths);
+    if (order.provider === "mock") {
+      await this.completeOrder(orderId, `mock_success_${Date.now()}`);
+      return true;
     }
 
-    const { data: membership, error: memError } = await supabaseAdmin
-      .from("memberships")
-      .upsert({
-        user_id: userId,
-        plan,
-        status: "active",
-        start_date: startDate.toISOString(),
-        expired_at: expiredAt ? expiredAt.toISOString() : null,
-        provider,
-        subscription_id: subscriptionId || `sub_${provider}_${Date.now()}`,
-      }, { onConflict: "user_id" })
-      .select("*")
-      .single();
-
-    if (memError) throw memError;
-
-    // Trigger tier update in profiles table directly
-    await supabaseAdmin
-      .from("profiles")
-      .update({ 
-        membership_type: plan,
-        subscription_tier: plan === "lifetime" ? "pro" : plan
-      })
-      .eq("id", userId);
-
-    // 2. Log subscription event
-    await supabaseAdmin.from("subscription_logs").insert({
-      user_id: userId,
-      action: "upgrade",
-      details: { plan, durationMonths, provider, subscriptionId, expiredAt: expiredAt ? expiredAt.toISOString() : "lifetime" },
-    });
-
-    return membership as MembershipData;
+    return false;
   },
 
   async completeOrder(orderId: string, transactionId: string): Promise<void> {
-    const { data: order } = await supabaseAdmin
-      .from("payment_orders")
-      .select("*")
-      .eq("id", orderId)
-      .maybeSingle();
-
+    const { data: order } = await this.getOrderById(orderId);
     if (!order || order.status === "paid") return;
 
     // 1. Update order status to paid
@@ -369,111 +187,28 @@ export const PaymentService = {
     // 2. Create successful payment history record
     await supabaseAdmin.from("payment_history").insert({
       user_id: order.user_id,
+      plan_id: order.plan_id,
+      order_id: orderId,
       amount: order.amount,
       currency: order.currency,
       status: "success",
       provider: order.provider,
       transaction_id: transactionId,
+      paid_at: new Date().toISOString()
     });
 
     // 3. Upgrade user membership
     const plan = order.plan_id.includes("pro") ? "pro" : order.plan_id.includes("basic") ? "basic" : "lifetime";
     const duration = order.plan_id.endsWith("yearly") ? 12 : 1;
-    await this.upgradeMembership(order.user_id, plan, duration, order.provider, transactionId);
-  },
-
-  async verifyPayment(orderId: string): Promise<boolean> {
-    const { data: order } = await supabaseAdmin
-      .from("payment_orders")
-      .select("*")
-      .eq("id", orderId)
-      .maybeSingle();
-
-    if (!order) return false;
-    if (order.status === "paid") return true;
-
-    if (order.provider === "stripe") {
-      return StripePaymentProviderImpl.verifyPayment(orderId);
-    }
-    
-    if (order.provider === "mock") {
-      await this.completeOrder(orderId, `mock_success_${Date.now()}`);
-      return true;
-    }
-
-    return false;
+    await MembershipService.upgradeMembership(order.user_id, plan, duration, order.provider, transactionId);
   },
 
   async cancelSubscription(userId: string): Promise<boolean> {
-    const mem = await this.getMembership(userId);
-    if (!mem || mem.plan === "free" || mem.status !== "active") return false;
-
-    if (mem.provider === "stripe" && mem.subscription_id) {
-      const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-      if (stripeSecretKey) {
-        try {
-          const res = await fetch(`https://api.stripe.com/v1/subscriptions/${mem.subscription_id}`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${stripeSecretKey}`,
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams({ cancel_at_period_end: "true" }).toString(),
-          });
-
-          if (res.ok) {
-            await supabaseAdmin
-              .from("memberships")
-              .update({ status: "canceled" })
-              .eq("user_id", userId);
-
-            await supabaseAdmin.from("subscription_logs").insert({
-              user_id: userId,
-              action: "cancel_subscription",
-              details: { provider: "stripe", subscriptionId: mem.subscription_id },
-            });
-            return true;
-          }
-        } catch (e) {
-          console.error("Stripe cancellation failed:", e);
-        }
-      }
-    }
-
-    await supabaseAdmin
-      .from("memberships")
-      .update({ status: "canceled" })
-      .eq("user_id", userId);
-
-    await supabaseAdmin.from("subscription_logs").insert({
-      user_id: userId,
-      action: "cancel_subscription",
-      details: { provider: mem.provider, subscriptionId: mem.subscription_id },
-    });
-
-    return true;
-  },
-
-  async restorePurchase(userId: string): Promise<MembershipData | null> {
-    const mem = await this.getMembership(userId);
-    if (!mem || mem.plan === "free") return mem;
-
-    if (mem.expired_at && new Date(mem.expired_at) < new Date()) {
-      const { data } = await supabaseAdmin
-        .from("memberships")
-        .update({ plan: "free", status: "expired" })
-        .eq("user_id", userId)
-        .select("*")
-        .single();
-      
-      await supabaseAdmin.from("subscription_logs").insert({
-        user_id: userId,
-        action: "expired",
-        details: { oldPlan: mem.plan },
-      });
-      return data as MembershipData;
-    }
-
-    return mem;
-  },
+    return MembershipService.cancelSubscription(userId);
+  }
 };
+
+// Auto check database immediately when service is loaded
+if (process.env.NODE_ENV !== "test") {
+  void PaymentService.autoCheckDatabase();
+}

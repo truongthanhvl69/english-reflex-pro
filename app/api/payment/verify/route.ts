@@ -25,6 +25,8 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error("Verify API Error:", error);
-    return NextResponse.json({ error: error.message || "Lỗi máy chủ khi kiểm tra đơn hàng" }, { status: 500 });
+    return NextResponse.json({
+      error: "Không thể kiểm tra đơn thanh toán.\nHệ thống đang được cập nhật.\nVui lòng thử lại sau."
+    }, { status: 500 });
   }
 }

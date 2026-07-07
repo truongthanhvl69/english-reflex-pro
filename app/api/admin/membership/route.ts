@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PaymentService, supabaseAdmin } from "@/services/paymentService";
+import { MembershipService } from "@/services/membershipService";
 
 export async function GET(request: Request) {
   try {
@@ -9,12 +10,11 @@ export async function GET(request: Request) {
       .select(`
         id,
         user_id,
-        plan,
+        membership_type,
         status,
-        start_date,
+        started_at,
         expired_at,
-        provider,
-        subscription_id,
+        auto_renew,
         profiles:user_id (
           full_name,
           email,
@@ -55,6 +55,7 @@ export async function GET(request: Request) {
         id,
         user_id,
         plan_id,
+        plan_code,
         amount,
         currency,
         provider,
@@ -78,11 +79,11 @@ export async function GET(request: Request) {
 
     // 5. Compute stats
     const totalMembers = members?.length || 0;
-    const proMembers = members?.filter((m) => m.plan === "pro" && m.status === "active").length || 0;
-    const premiumMembers = members?.filter((m) => m.plan === "premium" && m.status === "active").length || 0;
+    const proMembers = members?.filter((m) => m.membership_type === "pro" && m.status === "active").length || 0;
+    const premiumMembers = members?.filter((m) => m.membership_type === "premium" && m.status === "active").length || 0;
     const freeMembers = totalMembers - proMembers - premiumMembers;
 
-    // Compute monthly revenue (last 30 days success transactions)
+    // Compute monthly revenue
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const recentSuccessPayments = payments?.filter(
@@ -144,7 +145,7 @@ export async function POST(request: Request) {
       if (!orderId) return NextResponse.json({ error: "Thiếu mã đơn hàng" }, { status: 400 });
       const { error } = await supabaseAdmin
         .from("payment_orders")
-        .update({ status: "canceled", updated_at: new Date().toISOString() })
+        .update({ status: "cancelled", updated_at: new Date().toISOString() })
         .eq("id", orderId);
       if (error) throw error;
       return NextResponse.json({ success: true });
@@ -157,56 +158,22 @@ export async function POST(request: Request) {
       }
 
       for (const [key, val] of Object.entries(settings)) {
-        await PaymentService.updatePaymentSetting(key, val);
+        const { error } = await supabaseAdmin
+          .from("payment_settings")
+          .upsert({ key, value: val, updated_at: new Date().toISOString() });
+        if (error) throw error;
       }
       return NextResponse.json({ success: true });
     }
 
-    // E. Force update/upgrade membership (legacy)
+    // E. Force update/upgrade membership (legacy admin panel action)
     if (action === "update_tier") {
       if (!userId || !plan) return NextResponse.json({ error: "Thiếu tham số" }, { status: 400 });
-      let expiredAt: string | null = null;
-      if (plan !== "free") {
-        const date = new Date();
-        date.setMonth(date.getMonth() + (durationMonths || 1));
-        expiredAt = date.toISOString();
-      }
-
-      const { data: membership, error: err } = await supabaseAdmin
-        .from("memberships")
-        .upsert({
-          user_id: userId,
-          plan,
-          status: plan === "free" ? "none" : "active",
-          start_date: new Date().toISOString(),
-          expired_at: expiredAt,
-          provider: "admin_console",
-          subscription_id: `admin_man_${Date.now()}`,
-        })
-        .select("*")
-        .single();
-
-      if (err) throw err;
-
-      // Trigger tier update in profiles table directly
-      await supabaseAdmin
-        .from("profiles")
-        .update({ 
-          membership_type: plan,
-          subscription_tier: plan === "lifetime" ? "pro" : plan
-        })
-        .eq("id", userId);
-
-      await supabaseAdmin.from("subscription_logs").insert({
-        user_id: userId,
-        action: `admin_force_${plan}`,
-        details: { plan, durationMonths, expiredAt },
-      });
-
-      return NextResponse.json({ success: true, membership });
+      await MembershipService.upgradeMembership(userId, plan, durationMonths || 1, "admin_console", `admin_man_${Date.now()}`);
+      return NextResponse.json({ success: true });
     }
 
-    // F. Extend membership (legacy)
+    // F. Extend membership
     if (action === "extend") {
       if (!userId) return NextResponse.json({ error: "Thiếu user ID" }, { status: 400 });
       const { data: mem } = await supabaseAdmin
@@ -226,6 +193,7 @@ export async function POST(request: Request) {
         .update({
           status: "active",
           expired_at: baseDate.toISOString(),
+          updated_at: new Date().toISOString()
         })
         .eq("user_id", userId)
         .select("*")

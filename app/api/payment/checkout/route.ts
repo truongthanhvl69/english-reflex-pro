@@ -22,7 +22,10 @@ export async function POST(request: Request) {
       qrUrl: order.qr_url
     });
   } catch (error: any) {
+    // Catch-all translation of technical errors into a friendly prompt, logging raw error to server logs
     console.error("Checkout API Error:", error);
-    return NextResponse.json({ error: error.message || "Lỗi máy chủ khi tạo phiên thanh toán" }, { status: 500 });
+    return NextResponse.json({
+      error: "Không thể tạo đơn thanh toán.\nHệ thống đang được cập nhật.\nVui lòng thử lại sau."
+    }, { status: 500 });
   }
 }
