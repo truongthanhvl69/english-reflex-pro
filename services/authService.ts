@@ -14,6 +14,21 @@ export interface UserProfile {
   total_answers: number;
   correct_answers: number;
   subscription_tier: "free" | "pro" | "premium";
+  username?: string | null;
+  bio?: string | null;
+  country?: string | null;
+  timezone?: string | null;
+  language?: string | null;
+  last_login_at?: string | null;
+  membership_type?: string | null;
+  notification_study_alerts?: boolean;
+  notification_email_reminders?: boolean;
+  notification_achievements?: boolean;
+  notification_promotions?: boolean;
+  privacy_show_on_leaderboard?: boolean;
+  privacy_public_profile?: boolean;
+  privacy_show_streak?: boolean;
+  privacy_show_level?: boolean;
   created_at: string;
   updated_at: string;
 }
