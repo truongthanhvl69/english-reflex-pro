@@ -299,9 +299,8 @@ function ProfileContent() {
     }
   };
 
-  const name = profile?.full_name || user?.user_metadata.name || "Learner";
+  const name = profile?.full_name || user?.user_metadata?.name || "Learner";
   const tier = membership?.membership_type || "free";
-  const initials = getInitials(name).substring(0, 2).toUpperCase();
 
   return (
     <main className="profile-dashboard">
@@ -1113,9 +1112,10 @@ function ProfileContent() {
   );
 }
 
-function getInitials(name: string) {
+function getInitials(name?: string | null) {
+  if (!name || typeof name !== "string") return "LN";
   const names = name.trim().split(/\s+/);
-  if (names.length === 0) return "LN";
+  if (names.length === 0 || !names[0]) return "LN";
   return names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0][0];
 }
 
