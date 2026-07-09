@@ -3,9 +3,9 @@ import { StripeService } from "./stripeService";
 import { BankTransferService } from "./bankTransferService";
 import { MembershipService } from "./membershipService";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-url.supabase.co";
 // Fallback to publishable anon key in browser environment to prevent script load crash
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
 
 export const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
   auth: { persistSession: false },
@@ -209,7 +209,7 @@ export const PaymentService = {
   }
 };
 
-// Auto check database immediately when service is loaded
-if (process.env.NODE_ENV !== "test") {
+// Auto check database immediately when service is loaded and environment is configured
+if (process.env.NODE_ENV !== "test" && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
   void PaymentService.autoCheckDatabase();
 }
