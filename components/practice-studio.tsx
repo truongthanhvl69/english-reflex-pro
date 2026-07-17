@@ -36,6 +36,7 @@ function getNextLessonId(currentId?: string | null): string | null {
   else if (courseCode === "phrases") maxLessons = 50;
   else if (courseCode === "collocations") maxLessons = 18;
   else if (courseCode === "continuous") maxLessons = 5;
+  else if (courseCode === "structures") maxLessons = 50;
 
   if (num < maxLessons) {
     return `${courseCode}-${num + 1}`;

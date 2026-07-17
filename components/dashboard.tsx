@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { supabase } from "@/lib/supabaseClient";
 import { getContinueLearningState } from "@/services/learningStateService";
-import { courses, lessons, dailyLessons, continuousLessons } from "@/data/courses";
+import { courses, lessons, dailyLessons, continuousLessons, structuresLessons } from "@/data/courses";
 
 const modes: { id: PracticeMode; title: string; subtitle: string; icon: typeof Keyboard; accent: string; tag?: string }[] = [
   { id: "typing", title: "Gõ phản xạ", subtitle: "Việt → Anh", icon: Keyboard, accent: "blue", tag: "GỢI Ý" },
@@ -45,6 +45,10 @@ function getLessonDetails(lessonId: string) {
   if (courseId === "continuous") {
     const les = continuousLessons.find((l) => l.id === lessonId);
     return { title: les?.title || `Bài ${num}`, subtitle: les?.subtitle || "Thì hiện tại tiếp diễn" };
+  }
+  if (courseId === "structures") {
+    const les = structuresLessons.find((l) => l.id === lessonId);
+    return { title: les?.title || `Bài ${num}`, subtitle: les?.subtitle || "50 cấu trúc câu thông dụng" };
   }
   return { title: `Bài ${num}`, subtitle: "Bài học phản xạ" };
 }

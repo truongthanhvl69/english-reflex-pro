@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, ChevronDown, Clock3, LockKeyhole, Play, Search, SlidersHorizontal, Sparkles, Star } from "lucide-react";
-import { courses, lessons, dailyLessons, continuousLessons } from "@/data/courses";
+import { courses, lessons, dailyLessons, continuousLessons, structuresLessons } from "@/data/courses";
 import { MobileHeader } from "@/components/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserProgress, type UserProgressData } from "@/services/progressService";
@@ -38,6 +38,11 @@ export function CourseLibrary({ onStart, onMenu }: { onStart: (lessonId: string)
       const continuousProgress = userProgress.filter((p) => p.lesson_id.startsWith("continuous-"));
       const completedCount = continuousProgress.reduce((sum, item) => sum + (item.completed_sentence_ids?.length || 0), 0);
       return Math.min(100, Math.round((completedCount / 50) * 100));
+    }
+    if (courseId === "structures") {
+      const structuresProgress = userProgress.filter((p) => p.lesson_id.startsWith("structures-"));
+      const completedCount = structuresProgress.reduce((sum, item) => sum + (item.completed_sentence_ids?.length || 0), 0);
+      return Math.min(100, Math.round((completedCount / 2500) * 100));
     }
     return 0;
   };
@@ -127,6 +132,31 @@ export function CourseLibrary({ onStart, onMenu }: { onStart: (lessonId: string)
                       <div>
                         <strong>{lesson.title}: {lesson.subtitle}</strong>
                         <span>{progressPercent > 0 ? `${progressPercent}% hoàn thành` : `10 câu · +${lesson.exp} EXP`}</span>
+                      </div>
+                      {progressPercent > 0 && <div className="lesson-mini-progress"><i style={{ width: `${progressPercent}%` }} /></div>}
+                    </button>
+                  );
+                })
+              ) : selected.id === "structures" ? (
+                structuresLessons.map((lesson) => {
+                  const dbProgress = userProgress.find((p) => p.lesson_id === lesson.id);
+                  const totalSentences = 50;
+                  const isCompleted = dbProgress ? (dbProgress.is_completed || (dbProgress.completed_sentence_ids?.length || 0) >= totalSentences) : false;
+                  const progressPercent = dbProgress ? Math.min(100, Math.round(((dbProgress.completed_sentence_ids?.length || 0) / totalSentences) * 100)) : 0;
+                  const lessonLocked = lesson.id !== "structures-1" ? true : (isPro ? false : (dbProgress ? !dbProgress.is_unlocked : lesson.locked));
+
+                  return (
+                    <button key={lesson.id} disabled={lessonLocked} onClick={() => onStart(lesson.id)} className={progressPercent > 0 && !isCompleted ? "current" : ""}>
+                      <span className={`lesson-status ${isCompleted ? "done" : lessonLocked ? "locked" : "ready"}`}>
+                        {isCompleted ? <Check size={16} /> : lessonLocked ? <LockKeyhole size={14} /> : <Play size={14} fill="currentColor" />}
+                      </span>
+                      <div>
+                        <strong>{lesson.title}: {lesson.subtitle}</strong>
+                        <span>
+                          {lesson.id === "structures-1"
+                            ? (progressPercent > 0 ? `${progressPercent}% hoàn thành` : `50 câu · +${lesson.exp} EXP`)
+                            : "Sắp ra mắt / Cập nhật sau"}
+                        </span>
                       </div>
                       {progressPercent > 0 && <div className="lesson-mini-progress"><i style={{ width: `${progressPercent}%` }} /></div>}
                     </button>

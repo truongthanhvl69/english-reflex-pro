@@ -290,6 +290,59 @@ const continuous: Seed[] = [
   ["Can we stop walking soon? I’m starting to get tired.", "Chúng ta có thể dừng đi bộ sớm không? Tôi đang bắt đầu thấy mệt rồi.", ["Can we stop walking soon? I'm starting to get tired.", "Can we stop walking soon? I am starting to get tired."]]
 ];
 
+const structures: Seed[] = [
+  ["This cup of tea is too hot for me to drink.", "Ly trà này quá nóng để tôi uống."],
+  ["This math problem is too difficult for the boy to solve.", "Bài toán này quá khó để cậu bé giải được.", ["This math problem is too hard for the boy to solve."]],
+  ["He speaks too fast for us to understand.", "Anh ấy nói quá nhanh để chúng tôi có thể hiểu."],
+  ["This suitcase is too heavy for her to carry.", "Chiếc vali này quá nặng để cô ấy xách."],
+  ["That house is too expensive for them to buy.", "Ngôi nhà đó quá đắt để họ có thể mua."],
+  ["It's too dark for us to play sports.", "Trời quá tối để chúng ta chơi thể thao.", ["It is too dark for us to play sports."]],
+  ["The water in this lake is too cold for the children to swim in.", "Nước ở hồ này quá lạnh để bọn trẻ bơi."],
+  ["The music is too noisy for me to sleep.", "Tiếng nhạc quá ồn để tôi có thể ngủ.", ["The music is too loud for me to sleep."]],
+  ["This shirt is too small for him to wear.", "Chiếc áo sơ mi này quá nhỏ để anh ấy mặc vừa."],
+  ["This book is too long for me to read in a day.", "Quyển sách này quá dài để tôi đọc hết trong một ngày."],
+  ["The tea is too bitter for her to drink.", "Trà quá đắng để cô ấy có thể uống."],
+  ["This box is too small for me to keep all my stuff in.", "Chiếc hộp này quá nhỏ để tôi đựng tất cả đồ đạc của mình."],
+  ["This film is too scary for the children to watch.", "Bộ phim này quá đáng sợ để bọn trẻ xem.", ["This movie is too scary for the children to watch."]],
+  ["The bus is too slow for us to get to school on time.", "Chiếc xe buýt chạy quá chậm để chúng tôi có thể đến trường đúng giờ.", ["The bus is too slow for us to arrive at school on time."]],
+  ["These shoes are too tight for him to wear.", "Đôi giày này quá chật để anh ấy mang."],
+  ["This room is too noisy for the pupils to concentrate.", "Căn phòng này quá ồn ào để các học sinh tập trung.", ["This room is too loud for the pupils to concentrate."]],
+  ["This soup is too salty for my grandpa to eat.", "Món súp này quá mặn để ông của tôi ăn.", ["This soup is too salty for my grandfather to eat."]],
+  ["The distance is too far for us to walk.", "Quãng đường quá xa để chúng ta đi bộ."],
+  ["This song is too high for me to sing along with.", "Bài hát này quá cao để tôi có thể hát theo.", ["This song is too high for me to sing along."]],
+  ["This computer is too complex for my grandmother to use.", "Chiếc máy tính này quá phức tạp để bà tôi sử dụng.", ["This computer is too complicated for my grandmother to use.", "This computer is too complex for my grandma to use.", "This computer is too complicated for my grandma to use."]],
+  ["This coat is too expensive for me to buy.", "Chiếc áo khoác này quá đắt để tôi có thể mua."],
+  ["This exercise is too difficult for the pupils to solve by themselves.", "Bài tập này quá khó để các học sinh tự giải.", ["This exercise is too hard for the pupils to solve by themselves."]],
+  ["It's too cold for us to go for a walk.", "Trời quá lạnh để chúng tôi ra ngoài đi dạo.", ["It is too cold for us to go for a walk.", "It's too cold for us to go for a stroll.", "It is too cold for us to go for a stroll."]],
+  ["This cup of milk tea is too sweet for her to drink.", "Ly trà sữa này quá ngọt để cô ấy uống."],
+  ["These chairs are too heavy for the boy to move.", "Những chiếc ghế này quá nặng để cậu bé di chuyển."],
+  ["This flat is too small for their family to live in.", "Căn hộ này quá nhỏ để gia đình họ sinh sống.", ["This apartment is too small for their family to live in."]],
+  ["The water in this lake is too dirty for the children to swim in.", "Nước ở hồ này quá bẩn để bọn trẻ bơi."],
+  ["This picture is too blurry for us to look at clearly.", "Bức ảnh này quá mờ để chúng ta có thể nhìn rõ.", ["This photo is too blurry for us to look at clearly."]],
+  ["This lemon is too sour for me to eat.", "Quả chanh này quá chua để tôi có thể ăn."],
+  ["This mattress is too hard for my grandpa to sleep well on.", "Chiếc nệm này quá cứng để ông tôi có thể ngủ ngon.", ["This mattress is too hard for my grandfather to sleep well on."]],
+  ["This floor is too slippery for her to walk on.", "Cái sàn nhà này quá trơn để cô ấy đi trên đó."],
+  ["These questions are too difficult for the contestants to answer.", "Những câu hỏi này quá khó để các thí sinh có thể trả lời.", ["These questions are too hard for the contestants to answer."]],
+  ["This street is too crowded for us to drive through.", "Con phố này quá đông đúc để chúng tôi có thể lái xe qua."],
+  ["This bag is too heavy for the child to carry by himself.", "Chiếc túi này quá nặng để đứa trẻ có thể tự xách một mình.", ["This bag is too heavy for the kid to carry by himself."]],
+  ["This film is too sad for me to watch again.", "Bộ phim này quá buồn để tôi có thể xem lại lần nữa.", ["This movie is too sad for me to watch again."]],
+  ["This room is too small for ten people to work in.", "Căn phòng này quá nhỏ để mười người có thể làm việc bên trong."],
+  ["The music is too noisy for them to talk to each other.", "Tiếng nhạc quá to để họ có thể nói chuyện với nhau.", ["The music is too loud for them to talk to each other.", "The music is too noisy for them to talk to one another.", "The music is too loud for them to talk to one another."]],
+  ["This apple is too green for us to eat now.", "Quả táo này quá xanh để chúng ta có thể ăn ngay bây giờ."],
+  ["This exercise is too long for me to finish before 9 p.m.", "Bài tập này quá dài để tôi có thể hoàn thành trước 9 giờ tối.", ["This exercise is too long for me to finish before 9pm."]],
+  ["This desert is too hot for everyone to live in.", "Sa mạc này quá nóng để mọi người có thể sinh sống ở đó.", ["This desert is too hot for everybody to live in."]],
+  ["This financial report is too complex for an intern to analyze thoroughly.", "Bản báo cáo tài chính này quá phức tạp để một thực tập sinh có thể phân tích một cách thấu đáo.", ["This financial report is too complicated for an intern to analyze thoroughly."]],
+  ["The professor lectures too abstractly for freshmen to grasp the core content.", "Vị giáo sư ấy giảng bài quá trừu tượng để sinh viên năm nhất có thể nắm bắt được nội dung cốt lõi.", ["The professor lectures too abstractly for freshman to grasp the core content."]],
+  ["The policy changes occurred too abruptly for businesses to adapt in time.", "Những thay đổi về chính sách diễn ra quá đột ngột để doanh nghiệp có thể thích ứng kịp thời."],
+  ["The noise from the construction site is too intermittent for me to concentrate fully on my thesis.", "Tiếng ồn từ công trường xây dựng quá đứt quãng để tôi có thể tập trung hoàn toàn vào bài luận văn của mình."],
+  ["His perspective on this matter is too conservative for us to negotiate further.", "Quan điểm của anh ấy về vấn đề này quá bảo thủ để chúng ta có thể thương lượng thêm."],
+  ["This ancient building is too deteriorated for architects to restore to its original state.", "Tòa nhà cổ này quá xuống cấp để các kiến trúc sư có thể phục hồi lại nguyên trạng."],
+  ["This plan is too ambitious for a small-scale startup to implement successfully.", "Kế hoạch này quá tham vọng để một công ty khởi nghiệp quy mô nhỏ có thể thực hiện thành công."],
+  ["The cultural differences between the two countries are too profound for the members to integrate quickly.", "Sự khác biệt về văn hóa giữa hai quốc gia quá sâu sắc để các thành viên trong đoàn có thể hòa nhập nhanh chóng."],
+  ["The storm made landfall too unexpectedly for local authorities to evacuate all coastal residents.", "Cơn bão đổ bộ quá bất ngờ để chính quyền địa phương có thể sơ tán toàn bộ cư dân ven biển."],
+  ["The technical terminology in this book is too tedious for a beginner to feel interested.", "Những thuật ngữ chuyên ngành trong cuốn sách này quá khô khan để một người mới bắt đầu có thể cảm thấy hứng thú.", ["The technical terminology in this book is too tedious for a beginner to be interested."]]
+];
+
 function toSentence(seed: Seed, index: number, level: "A1" | "A2"): Sentence {
   const [english, vietnamese, alternatives = [], note = "Mẫu câu giao tiếp tự nhiên"] = seed;
   return {
@@ -351,9 +404,31 @@ function toContinuousSentence(seed: Seed, index: number): Sentence {
   };
 }
 
+function toStructuresSentence(seed: Seed, index: number): Sentence {
+  const [english, vietnamese, alternatives = [], note = "Cấu trúc Too... to (Quá... để làm gì)"] = seed;
+  const lessonNum = Math.floor(index / 50) + 1;
+  const lessonStr = `STRUCTURES - Bài ${String(lessonNum).padStart(2, "0")}`;
+  return {
+    id: `sentence_structures_${String(index + 1).padStart(3, "0")}`,
+    english,
+    vietnamese,
+    ipa: "",
+    level: "A2",
+    category: "Cấu trúc",
+    lesson: lessonStr,
+    partOfSpeech: "",
+    grammarNote: note,
+    alternativeAnswers: alternatives,
+    wordBank: english.replace(/[.!?]/g, "").split(/\s+/),
+    audioUrl: "",
+    tags: ["structures", "grammar"],
+  };
+}
+
 export const sentences: Sentence[] = [
   ...a1.map((seed, index) => toSentence(seed, index, "A1")),
   ...a2.map((seed, index) => toSentence(seed, index + 50, "A2")),
   ...daily.map((seed, index) => toDailySentence(seed, index)),
   ...continuous.map((seed, index) => toContinuousSentence(seed, index)),
+  ...structures.map((seed, index) => toStructuresSentence(seed, index)),
 ];

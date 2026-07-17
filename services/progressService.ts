@@ -1,6 +1,7 @@
 import type { PracticeMode } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 import { getNextLesson, unlockNextLesson } from "./learningStateService";
+import { sentences } from "@/data/sentences";
 
 export interface PracticeAttemptInput {
   sentenceId: string;
@@ -90,8 +91,18 @@ export async function recordPracticeAttempt(input: PracticeAttemptInput): Promis
   const sentenceIndex = input.sentenceIndex ?? 0;
   let nextIndex = sentenceIndex + 1;
 
-  // Since lessons contain 10 questions, when index hits 10 it is completed
-  const isLessonComplete = nextIndex >= 10;
+  const [courseCode, lessonNum] = input.lessonId.split("-");
+  let totalSentencesInLesson = 10;
+  if (courseCode && lessonNum) {
+    const targetLesson = `${courseCode.toUpperCase()} - Bài ${lessonNum.padStart(2, "0")}`;
+    const matched = sentences.filter((s) => s.lesson === targetLesson);
+    if (matched.length > 0) {
+      totalSentencesInLesson = matched.length;
+    }
+  }
+
+  // Since lessons contain variable amount of questions (e.g. 10 or 50), when index hits total it is completed
+  const isLessonComplete = nextIndex >= totalSentencesInLesson;
   if (isLessonComplete) {
     status = "completed";
     completedAt = new Date().toISOString();
@@ -108,7 +119,7 @@ export async function recordPracticeAttempt(input: PracticeAttemptInput): Promis
         lesson_id: lessonId,
         status,
         current_sentence_index: nextIndex,
-        total_sentences: 10,
+        total_sentences: totalSentencesInLesson,
         correct_count: correctCount,
         wrong_count: wrongCount,
         accuracy,

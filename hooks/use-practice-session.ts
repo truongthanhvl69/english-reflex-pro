@@ -34,6 +34,7 @@ function getNextLessonId(currentId?: string | null): string | null {
   else if (courseCode === "office") maxLessons = 14;
   else if (courseCode === "phrases") maxLessons = 50;
   else if (courseCode === "collocations") maxLessons = 18;
+  else if (courseCode === "structures") maxLessons = 50;
 
   if (num < maxLessons) {
     return `${courseCode}-${num + 1}`;
@@ -117,6 +118,10 @@ export function usePracticeSession(initialMode: PracticeMode, lessonId?: string 
     if (courseId === "a1" && num >= 1 && num <= 10) {
       const subtitles = ["Chào hỏi & giới thiệu", "Gia đình & bạn bè", "Thói quen mỗi ngày", "Ăn uống", "Mua sắm", "Thời gian", "Công việc", "Di chuyển", "Sở thích", "Ôn tập phản xạ"];
       return `A1 · Bài ${String(num).padStart(2, "0")}: ${subtitles[num - 1]}`;
+    }
+    if (courseId === "structures" && num >= 1 && num <= 50) {
+      const subtitle = num === 1 ? "Cấu trúc Too... to (Quá... để làm gì)" : "Cập nhật sau";
+      return `Cấu trúc · Bài ${String(num).padStart(2, "0")}: ${subtitle}`;
     }
     return `Bài học ${lessonId.toUpperCase()}`;
   }, [lessonId]);

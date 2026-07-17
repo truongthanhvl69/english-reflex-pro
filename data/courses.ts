@@ -8,6 +8,7 @@ export const courses: Course[] = [
   { id: "travel", title: "Tiếng Anh du lịch", description: "Tự tin từ sân bay đến khách sạn", level: "A1–A2", icon: "✈️", color: "orange", lessons: 10, sentences: 100, progress: 0, tags: ["Tình huống"] },
   { id: "phrases", title: "1000 câu thông dụng", description: "Kho phản xạ dùng được ngay trong đời sống", level: "A1–B2", icon: "⚡", color: "yellow", lessons: 50, sentences: 1000, progress: 0, tags: ["Thử thách"] },
   { id: "collocations", title: "Collocations", description: "Ghép từ đúng kiểu người bản xứ", level: "B1–C1", icon: "🧩", color: "pink", lessons: 18, sentences: 180, progress: 0, tags: ["Nâng cao"] },
+  { id: "structures", title: "50 Cấu Trúc Câu Thông Dụng", description: "Luyện phản xạ các cấu trúc câu giao tiếp và ngữ pháp then chốt", level: "A2–B2", icon: "💎", color: "violet", lessons: 50, sentences: 2500, progress: 0, tags: ["Cấu trúc", "Ngữ pháp"] },
 ];
 
 export const lessons = Array.from({ length: 10 }, (_, index) => ({
@@ -53,6 +54,16 @@ export const continuousLessons = Array.from({ length: 5 }, (_, index) => ({
     "Kế hoạch & Dự định",
     "Sự thay đổi & Xu hướng"
   ][index] || "Hiện tại tiếp diễn",
+  completed: false,
+  locked: index > 0,
+  progress: 0,
+  exp: 100,
+}));
+
+export const structuresLessons = Array.from({ length: 50 }, (_, index) => ({
+  id: `structures-${index + 1}`,
+  title: `Bài ${String(index + 1).padStart(2, "0")}`,
+  subtitle: index === 0 ? "Cấu trúc Too... to (Quá... để làm gì)" : "Cập nhật sau",
   completed: false,
   locked: index > 0,
   progress: 0,
